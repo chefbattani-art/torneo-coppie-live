@@ -1,991 +1,543 @@
 import streamlit as st
 import random
 import re
-from collections import defaultdict
-from datetime import datetime
+import json
+import os
+import io
+import time
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
-try:
-    from streamlit_autorefresh import st_autorefresh
-    st_autorefresh(interval=5000, key="live_refresh")
-except Exception:
-    pass
-
+# Configurazione generale dell'Hub (deve essere la prima chiamata Streamlit)
 st.set_page_config(
-    page_title="Torneo Coppie Fisse LIVE",
-    page_icon="⚽",
-    layout="wide",
-    initial_sidebar_state="collapsed",
+    page_title="Hub Tornei // By Battani", 
+    page_icon="🏆", 
+    layout="centered"
 )
 
-# ============================================================
-# REGOLE FISSE DEL TORNEO
-# ============================================================
-ADMIN_PIN = "0000"
-MAX_GOALS = 7
-LIVE_REFRESH_MS = 5000
-# Regola fissa: chi perde resta al tavolo.
-LOSER_STAYS = True
-
-# ============================================================
-# GRAFICA
-# ============================================================
+# --- STILE GRAFICO GLOBALE ---
 st.markdown("""
-<style>
-.stApp {
-    background:
-      radial-gradient(circle at 50% -5%, #173a50 0%, #071119 32%, #020407 75%);
-    color: #f5fbff;
-}
-.block-container { max-width: 1250px; padding-top: 18px; }
-.neon-title {
-    text-align:center;
-    font-size:clamp(32px,7vw,62px);
-    font-weight:1000;
-    line-height:.92;
-    margin:4px 0 18px;
-    text-shadow:0 0 8px #fff,0 0 20px #19ff72,0 0 40px #ff3fd4;
-}
-.subtitle { text-align:center; color:#b9c8d3; font-size:18px; margin-bottom:20px; }
-.panel,.card {
-    background:linear-gradient(145deg,#091923,#02070c);
-    border:1px solid #1b455e;
-    border-radius:20px;
-    padding:18px;
-    margin-bottom:15px;
-    box-shadow:0 0 28px #0008;
-}
-.personal {
-    border-color:#19ff72;
-    box-shadow:0 0 28px #19ff7220;
-    background:linear-gradient(145deg,#06251a,#03100c);
-}
-.personal h2 { color:#19ff72; margin:0; font-size:30px; }
-.live {
-    border-color:#ffd21a;
-    box-shadow:0 0 30px #ffd21a22;
-    background:linear-gradient(145deg,#1c1602,#070602);
-}
-.table-title {
-    text-align:center;
-    color:#ffd21a;
-    font-size:25px;
-    font-weight:1000;
-    padding:10px;
-    border-radius:13px;
-    background:linear-gradient(90deg,#241900,#695000,#241900);
-}
-.section-title {
-    font-size:clamp(24px,5vw,36px);
-    font-weight:1000;
-    margin:25px 0 12px;
-}
-.team {
-    border:1px solid #19ff72;
-    border-radius:18px;
-    padding:18px;
-    text-align:center;
-    background:linear-gradient(145deg,#003d24,#02130d);
-    min-height:105px;
-}
-.team.blue {
-    border-color:#19a7ff;
-    background:linear-gradient(145deg,#062f4e,#020d16);
-}
-.team-name {
-    font-size:clamp(19px,4vw,29px);
-    font-weight:1000;
-    line-height:1.05;
-}
-.vs { text-align:center; font-size:32px; font-weight:1000; padding-top:25px; }
-.queue {
-    border:1px solid #17394c;
-    border-radius:14px;
-    padding:13px;
-    margin:7px 0;
-    background:#040b11;
-    font-size:17px;
-}
-.badge {
-    display:inline-block;
-    padding:6px 11px;
-    border-radius:999px;
-    border:1px solid #28516a;
-    margin-right:5px;
-    font-weight:900;
-}
-.gold { color:#ffd21a; border-color:#ffd21a; }
-.green { color:#19ff72; border-color:#19ff72; }
-.blue-text { color:#19a7ff; border-color:#19a7ff; }
-.score {
-    text-align:center;
-    font-size:38px;
-    font-weight:1000;
-    padding:10px;
-}
-.small { color:#aabac6; }
-.podium {
-    text-align:center;
-    border:1px solid #ffd21a;
-    border-radius:24px;
-    padding:28px;
-    background:radial-gradient(circle,#211900,#070501);
-    box-shadow:0 0 40px #ffd21a20;
-}
-.podium .winner { color:#ffd21a; font-size:40px; font-weight:1000; }
-.stButton > button {
-    min-height:46px;
-    border-radius:13px;
-    font-size:17px;
-    font-weight:900;
-    border:1px solid #187fbe;
-    background:linear-gradient(180deg,#0b4f8e,#062d51);
-}
-@media(max-width:800px) {
-    .block-container { padding-left:10px; padding-right:10px; }
-    .vs { padding-top:0; }
-}
-</style>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&display=swap');
+
+    .main { 
+        background-color: #02040a; 
+        background-image: 
+            radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 50% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
+            linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        font-family: 'Rajdhani', sans-serif;
+        color: #f8fafc;
+    }
+
+    h1, h2, h3, h4, .stMarkdown {
+        font-family: 'Orbitron', sans-serif !important;
+    }
+
+    .hero-title-container {
+        text-align: center;
+        padding: 20px 10px;
+        margin-bottom: 20px;
+    }
+    .hero-main-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8em;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        background: linear-gradient(135deg, #00ff88 0%, #d4af37 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 20px rgba(0, 255, 136, 0.4), 0 0 40px rgba(212, 175, 55, 0.3);
+        margin-bottom: 5px;
+    }
+    .hero-subtitle {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.95em;
+        font-weight: 700;
+        color: #00f3ff;
+        letter-spacing: 4px;
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+    }
+    
+    .pro-turn-banner {
+        background: linear-gradient(135deg, #02151a, #04262b);
+        border-left: 5px solid #00f3ff;
+        border-right: 5px solid #d4af37;
+        border-top: 1px solid rgba(0, 243, 255, 0.4);
+        border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 6px;
+        padding: 16px;
+        text-align: center;
+        color: #00f3ff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.3em;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        margin-bottom: 25px;
+        box-shadow: 0 0 25px rgba(0, 243, 255, 0.25), inset 0 0 10px rgba(212, 175, 55, 0.1);
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+    }
+
+    .pro-match-card {
+        background: linear-gradient(160deg, #041014, #020608);
+        border: 2px solid rgba(0, 243, 255, 0.5);
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 243, 255, 0.15);
+    }
+
+    .match-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        padding-bottom: 8px;
+    }
+
+    .biliardino-title {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        color: #d4af37;
+        font-size: 1em;
+        letter-spacing: 1.5px;
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+    }
+
+    .turno-badge {
+        background: #02151a;
+        border: 1px solid #00f3ff;
+        color: #00f3ff;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.75em;
+        font-weight: 700;
+        letter-spacing: 1px;
+        box-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
+    }
+
+    .match-teams-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #041921;
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .team-box {
+        flex: 1;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.9em;
+        font-weight: 700;
+        color: #f8fafc;
+        text-transform: uppercase;
+    }
+
+    .vs-badge {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        color: #d4af37;
+        font-size: 1.1em;
+        padding: 0 15px;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);
+    }
+
+    .stButton > button {
+        width: 100% !important;
+        background: linear-gradient(135deg, #02202b, #043d52) !important;
+        color: #ffffff !important;
+        font-family: 'Orbitron', sans-serif !important;
+        font-weight: 700 !important;
+        border: 1px solid #00f3ff !important;
+        border-radius: 6px !important;
+        padding: 10px 0px !important;
+        font-size: 0.85em !important;
+        letter-spacing: 1.0px !important;
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        margin-top: 10px;
+    }
+    
+    .pro-rank-container {
+        background: #040c12;
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-top: 3px solid #d4af37;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 15px rgba(212, 175, 55, 0.1);
+    }
+    .pro-rank-header {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.1em;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        color: #d4af37;
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+    }
+    .pro-player-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #061721;
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        font-size: 0.9em;
+        border: 1px solid rgba(0, 243, 255, 0.15);
+    }
+    .pro-rank-name {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #d4af37;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# STATO
-# ============================================================
-def new_state():
-    return {
-        "phase": "setup",
-        "tavoli": 2,
-        "gironi_n": 2,
-        "coppie": [],
-        "giocatori": {},
-        "gironi": {},
-        "matches": [],
-        "finals": {"A": [], "B": []},
-        "fasce": {"A": [], "B": []},
-        "podio": {"A": None, "B": None},
-        "created_at": None,
-    }
-
-if "torneo" not in st.session_state:
-    st.session_state.torneo = new_state()
-if "player" not in st.session_state:
-    st.session_state.player = None
-if "admin" not in st.session_state:
-    st.session_state.admin = False
-if "scores" not in st.session_state:
-    st.session_state.scores = {}
-
-S = st.session_state.torneo
-
-# ============================================================
-# UTILITÀ
-# ============================================================
-def clean_line(line):
-    line = re.sub(r"^[\s\d\-\.\)\(•]+", "", line.strip())
-    line = re.sub(r"[⚽🏆🎮🔥⭐️]", "", line).strip()
-    return line
-
-def parse_couples(text):
-    result = []
-    for line in text.splitlines():
-        line = clean_line(line)
-        if not line:
-            continue
-        # Formati supportati:
-        # Mario / Luigi
-        # Mario + Luigi
-        # Mario - Luigi
-        # Mario e Luigi
-        parts = re.split(r"\s*(?:/|\+| - | e )\s*", line, maxsplit=1, flags=re.I)
-        if len(parts) == 2 and all(parts):
-            p1, p2 = parts[0].strip(), parts[1].strip()
-        else:
-            p1, p2 = line, ""
-        result.append({
-            "id": f"C{len(result)+1}",
-            "p1": p1,
-            "p2": p2,
-        })
-    return result
-
-def couple_name(cid):
-    c = next((x for x in S["coppie"] if x["id"] == cid), None)
-    if not c:
-        return "—"
-    return f"{c['p1']} / {c['p2']}" if c["p2"] else c["p1"]
-
-def players(c):
-    return [p for p in (c["p1"], c["p2"]) if p]
-
-def round_robin(ids):
-    arr = list(ids)
-    if len(arr) % 2:
-        arr.append(None)
-    rounds = []
-    for _ in range(len(arr)-1):
-        games = []
-        for i in range(len(arr)//2):
-            a, b = arr[i], arr[-1-i]
-            if a is not None and b is not None:
-                games.append((a, b))
-        rounds.append(games)
-        arr = [arr[0]] + [arr[-1]] + arr[1:-1]
-    return rounds
-
-def all_matches():
-    for m in S["matches"]:
-        yield m
-    for fs in ("A", "B"):
-        for m in S["finals"][fs]:
-            yield m
-
-def match_by_id(mid):
-    return next((m for m in all_matches() if m["id"] == mid), None)
-
-def player_cid():
-    return S["giocatori"].get(st.session_state.player)
-
-def player_live_match():
-    cid = player_cid()
-    if not cid:
-        return None
-    return next(
-        (m for m in all_matches()
-         if m["status"] == "live" and cid in (m["a"], m["b"])),
-        None
-    )
-
-def player_queue():
-    cid = player_cid()
-    if not cid:
-        return []
-    return [
-        m for m in all_matches()
-        if m["status"] == "queue" and cid in (m["a"], m["b"])
+# --- MENU DI SELEZIONE PRINCIPALE (SIDEBAR) ---
+st.sidebar.title("🏆 HUB TORNEI // BATTANI")
+tipo_torneo = st.sidebar.selectbox(
+    "Scegli quale Torneo Avviare:",
+    [
+        "🏠 Home Hub",
+        "⚽️ Torneo 1 (Inserisci nome)",
+        "🎾 Torneo 2 (Inserisci nome)",
+        "🔥 Torneo 3 (Baraonda a Vite)"
     ]
+)
 
-# ============================================================
-# CALENDARIO / CODA
-# ============================================================
-def current_queue_matches():
-    return [m for m in S["matches"] if m["status"] == "queue"]
+st.sidebar.markdown("---")
 
-def assign_initial_tables():
-    """Assegna le prime partite ai tavoli liberi.
-    Non crea partite artificiali: usa il calendario esistente."""
-    occupied = {
-        m["table"] for m in S["matches"]
-        if m["status"] == "live" and m["table"] is not None
-    }
-    free = [t for t in range(1, S["tavoli"]+1) if t not in occupied]
-    for m in S["matches"]:
-        if not free:
-            break
-        if m["status"] == "queue":
-            m["status"] = "live"
-            m["table"] = free.pop(0)
+# =========================================================================
+# 1. HOME HUB
+# =========================================================================
+if tipo_torneo == "🏠 Home Hub":
+    st.markdown("""
+        <div class="hero-title-container">
+            <div class="hero-main-title">Piattaforma Unificata Tornei</div>
+            <div class="hero-subtitle">Gestione Sportiva // By Battani</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    with st.container(border=True):
+        st.markdown("### Benvenuto nell'Hub Centrale!")
+        st.write("Da qui puoi gestire e selezionare comodamente il torneo desiderato tramite il menu laterale a sinistra.")
+        st.info("💡 **Suggerimento:** Ciascun torneo mantiene le proprie impostazioni, classifiche e file di stato salvati separatamente in modo da non sovrapporre i dati.")
 
-def loser_stays_after_result(match):
-    """Regola fissa:
-    chi perde resta al tavolo;
-    la prossima coppia in coda sfida chi è rimasto.
-    """
-    if match["phase"] != "gironi":
-        return
-    if match["ga"] is None or match["gb"] is None:
-        return
+# =========================================================================
+# 2. TORNEO 1 (Inserisci il codice del tuo primo script)
+# =========================================================================
+elif tipo_torneo == "⚽️ Torneo 1 (Inserisci nome)":
+    st.markdown("""
+        <div class="hero-title-container">
+            <div class="hero-main-title">Torneo 1</div>
+            <div class="hero-subtitle">By Battani</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.info("⚠️ Inserisci qui il codice del tuo **Torneo 1** adattando le chiavi dello `st.session_state` con il prefisso `t1_`.")
+    
+    # Esempio di struttura base per il Torneo 1:
+    if "t1_iscritti" not in st.session_state:
+        st.session_state.t1_iscritti = []
+        
+    squadra_t1 = st.text_input("Aggiungi partecipante/squadra al Torneo 1:", key="input_t1")
+    if st.button("Registra in Torneo 1"):
+        if squadra_t1:
+            st.session_state.t1_iscritti.append(squadra_t1)
+            st.success(f"Aggiunto: {squadra_t1}")
+            
+    st.write("Iscritti Torneo 1:", st.session_state.t1_iscritti)
 
-    if match["ga"] == match["gb"]:
-        # In caso di pareggio, nessuno viene dichiarato "campione del tavolo".
-        # Per non bloccare il torneo, entrambe lasciano e il tavolo viene
-        # riempito con le prossime due coppie.
-        match["table"] = None
-        assign_initial_tables()
-        return
+# =========================================================================
+# 3. TORNEO 2 (Inserisci il codice del tuo secondo script)
+# =========================================================================
+elif tipo_torneo == "🎾 Torneo 2 (Inserisci nome)":
+    st.markdown("""
+        <div class="hero-title-container">
+            <div class="hero-main-title">Torneo 2</div>
+            <div class="hero-subtitle">By Battani</div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.info("⚠️ Inserisci qui il codice del tuo **Torneo 2** adattando le chiavi dello `st.session_state` con il prefisso `t2_`.")
+    
+    # Esempio di struttura base per il Torneo 2:
+    if "t2_iscritti" not in st.session_state:
+        st.session_state.t2_iscritti = []
+        
+    squadra_t2 = st.text_input("Aggiungi partecipante/squadra al Torneo 2:", key="input_t2")
+    if st.button("Registra in Torneo 2"):
+        if squadra_t2:
+            st.session_state.t2_iscritti.append(squadra_t2)
+            st.success(f"Aggiunto: {squadra_t2}")
+            
+    st.write("Iscritti Torneo 2:", st.session_state.t2_iscritti)
 
-    loser = match["b"] if match["ga"] > match["gb"] else match["a"]
+# =========================================================================
+# 4. TORNEO 3 (Baraonda a Vite - Codice completo integrato)
+# =========================================================================
+elif tipo_torneo == "🔥 Torneo 3 (Baraonda a Vite)":
+    
+    # Gestione dello stato specifica per la Baraonda
+    STATE_FILE_B = "torneo_baraonda_state.json"
 
-    # La partita successiva è la prima in coda che NON sia il perdente.
-    # Il perdente rimane sul tavolo.
-    next_match = next(
-        (m for m in S["matches"]
-         if m["status"] == "queue"
-         and loser not in (m["a"], m["b"])),
-        None
-    )
-
-    if next_match:
-        next_match["status"] = "live"
-        next_match["table"] = match["table"]
-        # Il match concluso non occupa più il tavolo.
-        match["table"] = None
-
-        # Ricostruisce la partita LIVE usando il perdente + la coppia
-        # che era in testa alla coda.
-        newcomer = next_match["a"]
-        if newcomer == loser:
-            newcomer = next_match["b"]
-
-        # Rimuove il match teorico dalla coda e lo trasforma nel match reale.
-        next_match["a"] = loser
-        next_match["b"] = newcomer
-    else:
-        match["table"] = None
-        assign_initial_tables()
-
-def finish_match(match, ga, gb):
-    match["ga"] = int(ga)
-    match["gb"] = int(gb)
-    match["status"] = "done"
-    match["winner"] = (
-        match["a"] if ga > gb else
-        match["b"] if gb > ga else
-        None
-    )
-    old_table = match.get("table")
-    match["table"] = None
-
-    if match["phase"] == "gironi":
-        # Nel girone il tavolo passa secondo la regola fissa.
-        if old_table is not None:
-            match["_last_table"] = old_table
-        loser_stays_after_result(match)
-
-# ============================================================
-# CLASSIFICHE
-# ============================================================
-def standings(group):
-    ids = S["gironi"].get(group, [])
-    rows = {
-        cid: {
-            "id": cid,
-            "Coppia": couple_name(cid),
-            "PT": 0,
-            "GF": 0,
-            "GS": 0,
-            "DR": 0,
-            "V": 0,
-            "N": 0,
-            "S": 0,
+    def salva_stato_baraonda():
+        data = {
+            "players": st.session_state.baraonda_players,
+            "tournament_started": st.session_state.baraonda_tournament_started,
+            "initial_lives": st.session_state.baraonda_initial_lives,
+            "num_biliardini": st.session_state.baraonda_num_biliardini,
+            "current_round_matches": st.session_state.baraonda_current_round_matches,
+            "round_number": st.session_state.baraonda_round_number,
         }
-        for cid in ids
-    }
-    direct = defaultdict(dict)
+        with open(STATE_FILE_B, "w") as f:
+            json.dump(data, f)
 
-    for m in S["matches"]:
-        if m["phase"] != "gironi" or m["group"] != group or m["status"] != "done":
-            continue
-        a, b, ga, gb = m["a"], m["b"], m["ga"], m["gb"]
-        rows[a]["GF"] += ga
-        rows[a]["GS"] += gb
-        rows[b]["GF"] += gb
-        rows[b]["GS"] += ga
+    def carica_stato_baraonda():
+        if os.path.exists(STATE_FILE_B):
+            try:
+                with open(STATE_FILE_B, "r") as f:
+                    data = json.load(f)
+                    st.session_state.baraonda_players = data.get("players", [])
+                    st.session_state.baraonda_tournament_started = data.get("tournament_started", False)
+                    st.session_state.baraonda_initial_lives = data.get("initial_lives", 5)
+                    st.session_state.baraonda_num_biliardini = data.get("num_biliardini", 4)
+                    st.session_state.baraonda_current_round_matches = data.get("current_round_matches", [])
+                    st.session_state.baraonda_round_number = data.get("round_number", 0)
+                    return True
+            except:
+                return False
+        return False
 
-        if ga == gb:
-            rows[a]["PT"] += 2
-            rows[b]["PT"] += 2
-            rows[a]["N"] += 1
-            rows[b]["N"] += 1
-            direct[a][b] = direct[b][a] = 0
-        elif ga > gb:
-            diff = ga - gb
-            rows[a]["PT"] += 3 if diff >= 2 else 2
-            rows[b]["PT"] += 0 if diff >= 2 else 1
-            rows[a]["V"] += 1
-            rows[b]["S"] += 1
-            direct[a][b] = 1
-            direct[b][a] = -1
+    if "baraonda_initialized" not in st.session_state:
+        st.session_state.baraonda_initialized = True
+        if not carica_stato_baraonda():
+            st.session_state.baraonda_players = []
+            st.session_state.baraonda_tournament_started = False
+            st.session_state.baraonda_initial_lives = 5
+            st.session_state.baraonda_num_biliardini = 4
+            st.session_state.baraonda_current_round_matches = []
+            st.session_state.baraonda_round_number = 0
+
+    if "baraonda_giocatore_selezionato" not in st.session_state:
+        st.session_state.baraonda_giocatore_selezionato = None
+
+    def genera_abbinamenti_baraonda():
+        attivi = [p for p in st.session_state.baraonda_players if not p["eliminated"]]
+        
+        if st.session_state.baraonda_round_number == 1:
+            atts = [p for p in attivi if p["role"] == "attaccante"]
+            ports = [p for p in attivi if p["role"] == "portiere"]
+            random.shuffle(atts)
+            random.shuffle(ports)
+            
+            min_len = min(len(atts), len(ports))
+            coppie = []
+            for i in range(min_len):
+                coppie.append({"att": atts[i], "port": ports[i]})
+            random.shuffle(coppie)
         else:
-            diff = gb - ga
-            rows[b]["PT"] += 3 if diff >= 2 else 2
-            rows[a]["PT"] += 0 if diff >= 2 else 1
-            rows[b]["V"] += 1
-            rows[a]["S"] += 1
-            direct[a][b] = -1
-            direct[b][a] = 1
+            atts_w = [p for p in attivi if p["role"] == "attaccante" and p.get("last_result") == 'W']
+            atts_l = [p for p in attivi if p["role"] == "attaccante" and p.get("last_result") != 'W']
+            ports_w = [p for p in attivi if p["role"] == "portiere" and p.get("last_result") == 'W']
+            ports_l = [p for p in attivi if p["role"] == "portiere" and p.get("last_result") != 'W']
+            
+            random.shuffle(atts_w)
+            random.shuffle(atts_l)
+            random.shuffle(ports_w)
+            random.shuffle(ports_l)
+            
+            coppie = []
+            while atts_w and ports_l:
+                coppie.append({"att": atts_w.pop(0), "port": ports_l.pop(0)})
+            while atts_l and ports_w:
+                coppie.append({"att": atts_l.pop(0), "port": ports_w.pop(0)})
+            while atts_w and ports_w:
+                coppie.append({"att": atts_w.pop(0), "port": ports_w.pop(0)})
+            while atts_l and ports_l:
+                coppie.append({"att": atts_l.pop(0), "port": ports_l.pop(0)})
+                
+            random.shuffle(coppie)
 
-    for r in rows.values():
-        r["DR"] = r["GF"] - r["GS"]
-        r["_H2H"] = sum(direct[r["id"]].values())
-
-    return sorted(
-        rows.values(),
-        key=lambda r: (r["PT"], r["_H2H"], r["DR"], r["GF"]),
-        reverse=True
-    )
-
-# ============================================================
-# FASI FINALI
-# ============================================================
-def generate_final_bracket(fs):
-    ids = list(S["fasce"][fs])
-    if len(ids) < 2:
-        S["finals"][fs] = []
-        return
-
-    pairs = []
-    while len(ids) >= 2:
-        pairs.append((ids.pop(0), ids.pop(-1)))
-
-    total = len(pairs) * 2
-    if total >= 16:
-        phase = "OTTAVI"
-    elif total >= 8:
-        phase = "QUARTI"
-    elif total >= 4:
-        phase = "SEMIFINALI"
-    else:
-        phase = "FINALE"
-
-    S["finals"][fs] = []
-    for i, (a, b) in enumerate(pairs, 1):
-        S["finals"][fs].append({
-            "id": f"{fs}-{phase}-{i}",
-            "phase": phase,
-            "group": None,
-            "a": a,
-            "b": b,
-            "ga": None,
-            "gb": None,
-            "winner": None,
-            "status": "queue",
-            "table": None,
-        })
-
-def generate_finals():
-    a, b = [], []
-    for g in sorted(S["gironi"]):
-        rows = standings(g)
-        a.extend([r["id"] for r in rows[:4]])
-        b.extend([r["id"] for r in rows[4:]])
-
-    S["fasce"]["A"] = a
-    S["fasce"]["B"] = b
-    S["phase"] = "finali"
-    generate_final_bracket("A")
-    generate_final_bracket("B")
-
-def advance_final(fs):
-    matches = S["finals"][fs]
-    if not matches or not all(m["status"] == "done" for m in matches):
-        return
-
-    winners = [m["winner"] for m in matches]
-    losers = [
-        m["b"] if m["winner"] == m["a"] else m["a"]
-        for m in matches
-    ]
-
-    phase = matches[0]["phase"]
-
-    if phase == "SEMIFINALI":
-        S["podio"][fs] = {"finalists": winners, "third_fourth": losers}
-        S["finals"][fs] = [
-            {
-                "id": f"{fs}-FINALE-1",
-                "phase": "FINALE 1°/2°",
-                "group": None,
-                "a": winners[0],
-                "b": winners[1],
-                "ga": None, "gb": None, "winner": None,
-                "status": "queue", "table": None,
-            },
-            {
-                "id": f"{fs}-3P-1",
-                "phase": "FINALE 3°/4°",
-                "group": None,
-                "a": losers[0],
-                "b": losers[1],
-                "ga": None, "gb": None, "winner": None,
-                "status": "queue", "table": None,
-            },
-        ]
-        return
-
-    if phase in ("OTTAVI", "QUARTI"):
-        next_phase = "QUARTI" if phase == "OTTAVI" else "SEMIFINALI"
-        new = []
-        for i in range(0, len(winners), 2):
-            if i+1 >= len(winners):
-                break
-            new.append({
-                "id": f"{fs}-{next_phase}-{i//2+1}",
-                "phase": next_phase,
-                "group": None,
-                "a": winners[i],
-                "b": winners[i+1],
-                "ga": None, "gb": None, "winner": None,
-                "status": "queue", "table": None,
+        partite = []
+        i = 0
+        while i < len(coppie) - 1:
+            partite.append({
+                "teamA": (coppie[i]["att"], coppie[i]["port"]),
+                "teamB": (coppie[i+1]["att"], coppie[i+1]["port"])
             })
-        S["finals"][fs] = new
+            i += 2
+            
+        return {"partite": partite}
 
-# ============================================================
-# CREAZIONE TORNEO
-# ============================================================
-def create_tournament(text, tavoli, gironi_n):
-    couples = parse_couples(text)
-    if len(couples) < 2:
-        return None, "Inserisci almeno 2 coppie."
+    # Security Admin Sidebar specifica per la Baraonda
+    admin_code_b = st.sidebar.text_input("Codice Admin (Baraonda)", type="password", key="admin_b_pass")
+    is_admin_b = (admin_code_b == "0000")
 
-    random.shuffle(couples)
+    # Titolo della pagina
+    st.markdown("""
+        <div class="hero-title-container">
+            <div class="hero-main-title">Torneo Baraonda a Vite</div>
+            <div class="hero-subtitle">Con Ruolo Live // By Battani</div>
+        </div>
+    """, unsafe_allow_html=True)
 
-    groups = defaultdict(list)
-    for i, c in enumerate(couples):
-        groups[chr(65 + (i % gironi_n))].append(c["id"])
+    nomi_giocatori_b = sorted(list(set([p["name"] for p in st.session_state.baraonda_players]))) if st.session_state.baraonda_players else []
 
-    matches = []
-    serial = 1
-    for group, ids in sorted(groups.items()):
-        for rnd in round_robin(ids):
-            for a, b in rnd:
-                matches.append({
-                    "id": f"G-{group}-{serial}",
-                    "phase": "gironi",
-                    "group": group,
-                    "round": serial,
-                    "a": a,
-                    "b": b,
-                    "ga": None,
-                    "gb": None,
-                    "winner": None,
-                    "status": "queue",
-                    "table": None,
-                })
-                serial += 1
-
-    players_map = {}
-    for c in couples:
-        for p in players(c):
-            if p in players_map:
-                return None, f"Nome duplicato: {p}. Ogni giocatore deve avere un nome univoco."
-            players_map[p] = c["id"]
-
-    return {
-        "phase": "gironi",
-        "tavoli": int(tavoli),
-        "gironi_n": int(gironi_n),
-        "coppie": couples,
-        "giocatori": players_map,
-        "gironi": dict(groups),
-        "matches": matches,
-        "finals": {"A": [], "B": []},
-        "fasce": {"A": [], "B": []},
-        "podio": {"A": None, "B": None},
-        "created_at": datetime.now().isoformat(timespec="seconds"),
-    }, None
-
-# ============================================================
-# LOGIN
-# ============================================================
-if not st.session_state.player and not st.session_state.admin:
-    st.markdown(
-        "<div class='neon-title'>⚽<br>TORNEO COPPIE FISSE<br>"
-        "<span style='color:#19ff72'>LIVE</span></div>",
-        unsafe_allow_html=True,
-    )
-
-    if S["phase"] == "setup":
-        st.markdown(
-            "<div class='subtitle'>Il torneo non è ancora stato avviato.</div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            "<div class='subtitle'>Seleziona il tuo nome per entrare nel torneo</div>",
-            unsafe_allow_html=True,
-        )
-        names = sorted(S["giocatori"].keys())
-        selected = st.selectbox(
-            "👤 IL TUO NOME",
-            ["— Seleziona il tuo nome —"] + names,
-        )
-        if st.button("🚀 ENTRA NEL TORNEO", use_container_width=True):
-            if selected == "— Seleziona il tuo nome —":
-                st.error("Devi selezionare il tuo nome.")
-            else:
-                st.session_state.player = selected
-                st.rerun()
-
-    st.divider()
-    with st.expander("👑 Accesso amministratore"):
-        pin = st.text_input("PIN Admin", type="password")
-        if st.button("🔐 ENTRA COME ADMIN", use_container_width=True):
-            if pin == ADMIN_PIN:
-                st.session_state.admin = True
-                st.rerun()
-            else:
-                st.error("PIN non corretto.")
-    st.stop()
-
-# ============================================================
-# ASSEGNAZIONE INIZIALE
-# ============================================================
-if S["phase"] == "gironi":
-    assign_initial_tables()
-
-# ============================================================
-# SIDEBAR
-# ============================================================
-with st.sidebar:
-    st.markdown(
-        "<div class='neon-title' style='font-size:30px'>⚽<br>TORNEO<br>"
-        "<span style='color:#19ff72'>LIVE</span></div>",
-        unsafe_allow_html=True,
-    )
-
-    if st.session_state.admin:
-        st.success("👑 ADMIN")
-        page = st.radio(
-            "MENU",
-            ["👑 Admin", "⚡ Live", "🏆 Classifica", "🗓️ Calendario", "🥇 Fasi Finali"],
-        )
-    else:
-        cid = player_cid()
-        st.markdown(
-            f"<div class='personal'><h2>👤 {st.session_state.player}</h2>"
-            f"<div class='small'>{couple_name(cid)}</div></div>",
-            unsafe_allow_html=True,
-        )
-        page = st.radio(
-            "MENU",
-            ["👤 La mia area", "⚡ Live", "🏆 Classifica", "🗓️ Le mie partite", "🥇 Fasi Finali"],
-        )
-
-    if st.button("🚪 Esci"):
-        st.session_state.player = None
-        st.session_state.admin = False
-        st.rerun()
-
-# ============================================================
-# AREA PERSONALE
-# ============================================================
-if page == "👤 La mia area":
-    cid = player_cid()
-    st.markdown("<div class='neon-title'>🏆 TORNEO COPPIE FISSE LIVE</div>", unsafe_allow_html=True)
-
-    st.markdown(
-        f"<div class='panel personal'><h2>👤 {st.session_state.player}</h2>"
-        f"<div class='team-name'>{couple_name(cid)}</div>"
-        f"<div class='small'>La tua area personale</div></div>",
-        unsafe_allow_html=True,
-    )
-
-    live = player_live_match()
-
-    if live:
-        opponent = live["b"] if live["a"] == cid else live["a"]
-        st.markdown(
-            f"<div class='panel live'><div class='table-title'>🟢 PARTITA IN CORSO · "
-            f"🎱 BILIARDINO {live['table']}</div>"
-            f"<div class='score'>{couple_name(cid)}<br>"
-            f"<span style='color:#ffd21a'>VS</span><br>{couple_name(opponent)}</div>"
-            f"<div style='text-align:center;color:#ffd21a;font-weight:900'>"
-            f"Regola LIVE: chi perde resta al tavolo</div></div>",
-            unsafe_allow_html=True,
-        )
-
-        st.markdown("### 📝 INSERISCI IL RISULTATO")
-        st.caption("Tocca un numero da 0 a 7. Nessuna tastiera.")
-
-        score_key = live["id"]
-        current = st.session_state.scores.setdefault(score_key, {"self": None, "opp": None})
-
-        left, right = st.columns(2)
-
-        def score_selector(col, label, slot):
-            with col:
-                st.markdown(f"**{label}**")
-                cols = st.columns(8)
-                for n, c in enumerate(cols):
-                    selected = current[slot] == n
-                    text = f"● {n}" if selected else f"○ {n}"
-                    if c.button(text, key=f"{score_key}-{slot}-{n}"):
-                        current[slot] = n
-                        st.rerun()
-
-        score_selector(left, couple_name(cid), "self")
-        score_selector(right, couple_name(opponent), "opp")
-
-        if current["self"] is not None and current["opp"] is not None:
-            my_first = live["a"] == cid
-            ga, gb = (
-                (current["self"], current["opp"])
-                if my_first else
-                (current["opp"], current["self"])
-            )
-
-            st.markdown(
-                f"<div class='panel score'>"
-                f"{current['self']} — {current['opp']}</div>",
-                unsafe_allow_html=True,
-            )
-
-            if st.button("✅ CONFERMA RISULTATO", use_container_width=True):
-                # Nei gironi il pareggio è ammesso.
-                finish_match(live, ga, gb)
-                st.session_state.scores.pop(score_key, None)
-                st.success("Risultato registrato! La coda è stata aggiornata.")
-                st.rerun()
-    else:
-        q = player_queue()
-        if q:
-            queue = [m for m in S["matches"] if m["status"] == "queue"]
-            pos = next(
-                (i+1 for i, m in enumerate(queue) if cid in (m["a"], m["b"])),
-                1,
-            )
-            st.markdown(
-                f"<div class='panel' style='text-align:center'>"
-                f"<div class='section-title'>⏳ PREPARATI</div>"
-                f"<div style='font-size:32px;font-weight:1000;color:#ffd21a'>"
-                f"POSIZIONE #{pos}</div>"
-                f"<div class='small'>Sarai chiamato automaticamente quando arriva il tuo turno.</div>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
+    if st.session_state.baraonda_giocatore_selezionato is None:
+        if nomi_giocatori_b:
+            with st.container(border=True):
+                st.markdown("### 👤 SELEZIONA UTENTE:")
+                nome_scelto_b = st.selectbox("Iscritti:", nomi_giocatori_b, key="sel_user_b")
+                if st.button("ACCEDI ALLA COMPETIZIONE", type="primary"):
+                    st.session_state.baraonda_giocatore_selezionato = nome_scelto_b
+                    st.rerun()
         else:
-            st.info("Nessuna partita LIVE per la tua coppia.")
-
-    # Classifica del girone.
-    group = next((g for g, ids in S["gironi"].items() if cid in ids), None)
-    if group:
-        rows = standings(group)
-        mine = next(r for r in rows if r["id"] == cid)
-        st.markdown(f"<div class='section-title'>📊 GIRONE {group}</div>", unsafe_allow_html=True)
-        c1,c2,c3,c4 = st.columns(4)
-        c1.metric("POSIZIONE", rows.index(mine)+1)
-        c2.metric("PUNTI", mine["PT"])
-        c3.metric("GF", mine["GF"])
-        c4.metric("DR", mine["DR"])
-        st.dataframe(
-            [{k:v for k,v in r.items() if not k.startswith("_") and k != "id"} for r in rows],
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    st.markdown("### 📅 LE MIE PARTITE")
-    for m in [x for x in all_matches() if cid in (x["a"], x["b"])]:
-        opponent = m["b"] if m["a"] == cid else m["a"]
-        status = {"done":"✅ TERMINATA","live":"🟢 IN CORSO","queue":"⏳ IN CODA"}.get(m["status"], m["status"])
-        score = f"{m['ga']} — {m['gb']}" if m["status"] == "done" else "—"
-        table = f" · 🎱 Biliardino {m['table']}" if m["status"] == "live" else ""
-        st.markdown(
-            f"<div class='queue'><span class='badge green'>{status}</span>"
-            f"{couple_name(opponent)} · <b>{score}</b>{table}</div>",
-            unsafe_allow_html=True,
-        )
-
-# ============================================================
-# LIVE
-# ============================================================
-elif page == "⚡ Live":
-    st.markdown("<div class='neon-title'>⚡ LIVE</div>", unsafe_allow_html=True)
-    live = [m for m in all_matches() if m["status"] == "live"]
-
-    if not live:
-        st.info("Nessuna partita in corso.")
-
-    for m in live:
-        st.markdown(
-            f"<div class='panel live'><div class='table-title'>🎱 BILIARDINO {m['table']}</div>"
-            f"<div class='team'><div class='team-name'>{couple_name(m['a'])}</div></div>"
-            f"<div class='vs'>VS</div>"
-            f"<div class='team blue'><div class='team-name'>{couple_name(m['b'])}</div></div>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("### ⏳ CODA")
-    queue = [m for m in S["matches"] if m["status"] == "queue"]
-    if not queue:
-        st.success("Coda vuota.")
-    for i,m in enumerate(queue[:30], 1):
-        st.markdown(
-            f"<div class='queue'><span class='badge gold'>#{i}</span>"
-            f"<b>{couple_name(m['a'])}</b> VS <b>{couple_name(m['b'])}</b></div>",
-            unsafe_allow_html=True,
-        )
-
-# ============================================================
-# CLASSIFICA
-# ============================================================
-elif page == "🏆 Classifica":
-    st.markdown("<div class='neon-title'>🏆 CLASSIFICHE</div>", unsafe_allow_html=True)
-    for g in sorted(S["gironi"]):
-        st.markdown(f"<div class='section-title'>GIRONE {g}</div>", unsafe_allow_html=True)
-        rows = standings(g)
-        st.dataframe(
-            [{k:v for k,v in r.items() if not k.startswith("_") and k != "id"} for r in rows],
-            use_container_width=True,
-            hide_index=True,
-        )
-
-# ============================================================
-# CALENDARIO
-# ============================================================
-elif page in ("🗓️ Le mie partite", "🗓️ Calendario"):
-    st.markdown("<div class='neon-title'>🗓️ CALENDARIO</div>", unsafe_allow_html=True)
-
-    if st.session_state.admin:
-        matches = list(all_matches())
-    else:
-        cid = player_cid()
-        matches = [m for m in all_matches() if cid in (m["a"],m["b"])]
-
-    for m in matches:
-        score = f"{m['ga']} — {m['gb']}" if m["status"] == "done" else "—"
-        st.markdown(
-            f"<div class='queue'><span class='badge'>{m['status'].upper()}</span>"
-            f"<b>{couple_name(m['a'])}</b> VS <b>{couple_name(m['b'])}</b>"
-            f" · {score}</div>",
-            unsafe_allow_html=True,
-        )
-
-# ============================================================
-# FINALI
-# ============================================================
-elif page == "🥇 Fasi Finali":
-    st.markdown("<div class='neon-title'>🥇 FASI FINALI</div>", unsafe_allow_html=True)
-
-    for fs in ("A", "B"):
-        st.markdown(f"<div class='section-title'>🏆 FASCIA {fs}</div>", unsafe_allow_html=True)
-        finals = S["finals"][fs]
-
-        if not finals:
-            st.info("Tabellone non ancora generato.")
-            continue
-
-        for m in finals:
-            st.markdown(
-                f"<div class='panel live'><div class='table-title'>{m['phase']}</div>"
-                f"<div class='score'>{couple_name(m['a'])}<br>"
-                f"<span style='color:#ffd21a'>VS</span><br>{couple_name(m['b'])}</div>"
-                f"</div>",
-                unsafe_allow_html=True,
-            )
-
-        if st.session_state.admin and all(m["status"] == "done" for m in finals):
-            if st.button(f"➡️ AVANZA FASCIA {fs}", key=f"advance-{fs}"):
-                advance_final(fs)
-                st.rerun()
-
-    for fs in ("A","B"):
-        p = S["podio"].get(fs)
-        if p:
-            st.markdown(
-                f"<div class='podium'><div class='winner'>🏆 FASCIA {fs}</div>"
-                f"<div style='font-size:22px;margin-top:10px'>"
-                f"🥇 {couple_name(p['finalists'][0])}<br>"
-                f"🥈 {couple_name(p['finalists'][1])}<br>"
-                f"🥉/4° {couple_name(p['third_fourth'][0])} · "
-                f"{couple_name(p['third_fourth'][1])}</div></div>",
-                unsafe_allow_html=True,
-            )
-
-# ============================================================
-# ADMIN
-# ============================================================
-elif page == "👑 Admin":
-    st.markdown("<div class='neon-title'>👑 ADMIN</div>", unsafe_allow_html=True)
-    st.success("PIN amministratore: 0000")
-    st.info("Regola fissa del torneo: **chi perde resta al tavolo**. Non è configurabile.")
-
-    tabs = st.tabs(["⚙️ Setup", "🎱 Tavoli", "✏️ Risultati", "🏆 Fasi Finali", "🔄 Reset"])
-
-    with tabs[0]:
-        st.markdown("### 👥 Crea il torneo")
-        text = st.text_area(
-            "Inserisci le coppie, una per riga. Esempio: Mario / Luigi",
-            height=220,
-        )
-        c1,c2 = st.columns(2)
-        tavoli = c1.number_input("🎱 Biliardini", min_value=1, max_value=10, value=int(S["tavoli"]))
-        gironi = c2.number_input("🏆 Gironi", min_value=1, max_value=20, value=int(S["gironi_n"]))
-
-        if st.button("🎲 CREA SORTEGGIO E CALENDARIO", use_container_width=True):
-            new, error = create_tournament(text, int(tavoli), int(gironi))
-            if error:
-                st.error(error)
-            else:
-                st.session_state.torneo = new
-                st.session_state.player = None
-                st.session_state.scores = {}
-                st.success("Torneo creato. I giocatori possono ora entrare con il proprio nome.")
-                st.rerun()
-
-        if S["coppie"]:
-            st.markdown("### 👥 Coppie registrate")
-            for c in S["coppie"]:
-                st.write(f"**{c['id']}** — {couple_name(c['id'])}")
-
-    with tabs[1]:
-        st.markdown("### 🎱 Tavoli LIVE")
-        for table in range(1, S["tavoli"]+1):
-            m = next(
-                (x for x in all_matches()
-                 if x["status"] == "live" and x.get("table") == table),
-                None
-            )
-            if m:
-                st.markdown(
-                    f"<div class='queue'><b>🎱 {table}</b> · 🟢 "
-                    f"{couple_name(m['a'])} VS {couple_name(m['b'])}</div>",
-                    unsafe_allow_html=True,
-                )
-                if st.button(f"🔓 LIBERA TAVOLO {table}", key=f"free-{table}"):
-                    m["status"] = "queue"
-                    m["table"] = None
-                    assign_initial_tables()
+            st.warning("⚠️ Nessun partecipante caricato. Configura i dati dal pannello Admin sottostante.")
+            
+        if is_admin_b:
+            with st.expander("⚙️ Pannello Configurazione & Gestione (Admin Baraonda)", expanded=True):
+                st.session_state.baraonda_initial_lives = st.number_input("Vite iniziali", 1, 10, st.session_state.baraonda_initial_lives, key="b_ilives")
+                st.session_state.baraonda_num_biliardini = st.number_input("Numero Biliardini", 1, 10, st.session_state.baraonda_num_biliardini, key="b_num_bil")
+                lista_input_b = st.text_area("Incolla partecipanti (es: 1 ⚽️ Nome, 2 🥅 Nome):", height=80, key="b_in_text")
+                if st.button("📥 Importa e Registra Giocatori", type="primary", key="b_imp_btn"):
+                    for riga in lista_input_b.split("\n"):
+                        riga_pulita = riga.strip()
+                        if not riga_pulita: continue
+                        role = "portiere" if "🥅" in riga_pulita else ("attaccante" if "⚽" in riga_pulita else None)
+                        if role:
+                            nome = re.sub(r'^\d+[\.\-\s]*', '', riga_pulita.replace("🥅", "").replace("⚽️", "").replace("⚽", "")).strip()
+                            if nome and not any(p["name"].lower() == nome.lower() and p["role"] == role for p in st.session_state.baraonda_players):
+                                st.session_state.baraonda_players.append({
+                                    "id": len(st.session_state.baraonda_players)+1, 
+                                    "name": nome, 
+                                    "role": role, 
+                                    "lives": st.session_state.baraonda_initial_lives, 
+                                    "max_lives": st.session_state.baraonda_initial_lives, 
+                                    "eliminated": False, 
+                                    "last_result": None
+                                })
+                    salva_stato_baraonda()
                     st.rerun()
-            else:
-                st.markdown(
-                    f"<div class='queue'><b>🎱 {table}</b> · LIBERO</div>",
-                    unsafe_allow_html=True,
-                )
+                if len(st.session_state.baraonda_players) >= 2 and not st.session_state.baraonda_tournament_started:
+                    if st.button("🚀 Avvia Torneo", type="primary", key="b_start_btn"):
+                        st.session_state.baraonda_tournament_started = True
+                        st.session_state.baraonda_round_number = 1
+                        st.session_state.baraonda_current_round_matches = genera_abbinamenti_baraonda()
+                        salva_stato_baraonda()
+                        st.rerun()
+        st.stop()
 
-        if st.button("⚡ RIEMPI I TAVOLI"):
-            assign_initial_tables()
+    # Pannello di controllo utente loggato
+    col_ub1, col_ub2 = st.columns([3, 1])
+    with col_ub1:
+        st.info(f"⚡ Operatore Connesso: **{st.session_state.baraonda_giocatore_selezionato.upper()}**")
+    with col_ub2:
+        if st.button("🔄 Logout", use_container_width=True, key="logout_b_btn"):
+            st.session_state.baraonda_giocatore_selezionato = None
             st.rerun()
 
-    with tabs[2]:
-        st.markdown("### ✏️ Correzione risultati")
-        for m in list(all_matches()):
-            if m["status"] == "done":
-                with st.expander(
-                    f"{m['id']} · {couple_name(m['a'])} VS {couple_name(m['b'])} · {m['ga']}-{m['gb']}"
-                ):
-                    ga = st.number_input("Gol A", 0, MAX_GOALS, int(m["ga"]), key=f"ga-{m['id']}")
-                    gb = st.number_input("Gol B", 0, MAX_GOALS, int(m["gb"]), key=f"gb-{m['id']}")
-                    if st.button("💾 SALVA", key=f"save-{m['id']}"):
-                        m["ga"] = ga
-                        m["gb"] = gb
-                        m["winner"] = m["a"] if ga > gb else (m["b"] if gb > ga else None)
-                        st.success("Risultato corretto.")
+    st.markdown("---")
+
+    if st.session_state.baraonda_tournament_started:
+        data_turno_b = st.session_state.baraonda_current_round_matches
+        
+        if data_turno_b and not data_turno_b.get("partite"):
+            st.session_state.baraonda_round_number += 1
+            st.session_state.baraonda_current_round_matches = genera_abbinamenti_baraonda()
+            salva_stato_baraonda()
+            st.rerun()
+
+        st.markdown(f"""<div class="pro-turn-banner">⚔️ TURNO DI GARA N° {st.session_state.baraonda_round_number}</div>""", unsafe_allow_html=True)
+
+        partite_b = data_turno_b.get("partite", []) if data_turno_b else []
+        if partite_b:
+            num_bil_b = st.session_state.baraonda_num_biliardini
+            partite_in_corso_b = partite_b[:num_bil_b]
+
+            for idx_b, match_b in enumerate(partite_in_corso_b):
+                tA_att, tA_port = match_b["teamA"]
+                tB_att, tB_port = match_b["teamB"]
+                biliardino_num_b = idx_b + 1
+
+                st.markdown(f"""
+                    <div class="pro-match-card">
+                        <div class="match-header-row">
+                            <span class="biliardino-title">🏟️ BILIARDINO {biliardino_num_b}</span>
+                            <span class="turno-badge">TURNO {st.session_state.baraonda_round_number}</span>
+                        </div>
+                        <div class="match-teams-row">
+                            <div class="team-box">🥅 {tA_port['name'].upper()} / ⚽️ {tA_att['name'].upper()}</div>
+                            <div class="vs-badge">VS</div>
+                            <div class="team-box">🥅 {tB_port['name'].upper()} / ⚽️ {tB_att['name'].upper()}</div>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                nome_coppia_a_b = f"{tA_port['name'].upper()} & {tA_att['name'].upper()}"
+                nome_coppia_b_b = f"{tB_port['name'].upper()} & {tB_att['name'].upper()}"
+
+                cb1, cb2 = st.columns(2)
+                with cb1:
+                    if st.button(f"⚡ VITTORIA: {nome_coppia_a_b}", key=f"bwa_{st.session_state.baraonda_round_number}_{idx_b}", use_container_width=True):
+                        perdenti_b = [tB_att, tB_port]
+                        for v in [tA_att, tA_port]: v["last_result"] = 'W'
+                        for per in perdenti_b:
+                            per["last_result"] = 'L'
+                            per["lives"] = max(0, per["lives"] - 1)
+                            if per["lives"] == 0: per["eliminated"] = True
+
+                        st.session_state.baraonda_current_round_matches["partite"].pop(idx_b)
+                        salva_stato_baraonda()
                         st.rerun()
 
-    with tabs[3]:
-        all_done = bool(S["matches"]) and all(m["status"] == "done" for m in S["matches"])
-        if S["phase"] == "gironi" and all_done:
-            if st.button("🏆 GENERA FASCIA A / FASCIA B", use_container_width=True):
-                generate_finals()
-                st.rerun()
-        elif S["phase"] == "gironi":
-            st.warning("Completa tutte le partite dei gironi prima di generare le fasi finali.")
+                with cb2:
+                    if st.button(f"⚡ VITTORIA: {nome_coppia_b_b}", key=f"bwb_{st.session_state.baraonda_round_number}_{idx_b}", use_container_width=True):
+                        perdenti_b = [tA_att, tA_port]
+                        for v in [tB_att, tB_port]: v["last_result"] = 'W'
+                        for per in perdenti_b:
+                            per["last_result"] = 'L'
+                            per["lives"] = max(0, per["lives"] - 1)
+                            if per["lives"] == 0: per["eliminated"] = True
 
-        st.write(f"Fascia A: {len(S['fasce']['A'])} coppie")
-        st.write(f"Fascia B: {len(S['fasce']['B'])} coppie")
+                        st.session_state.baraonda_current_round_matches["partite"].pop(idx_b)
+                        salva_stato_baraonda()
+                        st.rerun()
 
-        for fs in ("A","B"):
-            finals = S["finals"][fs]
-            if finals and all(m["status"] == "done" for m in finals):
-                if st.button(f"➡️ AVANZA FASCIA {fs}", key=f"admin-advance-{fs}"):
-                    advance_final(fs)
-                    st.rerun()
+    st.markdown("---")
 
-    with tabs[4]:
-        st.warning("Questa operazione cancella completamente il torneo.")
-        if st.button("🔴 AZZERA TUTTO", use_container_width=True):
-            st.session_state.torneo = new_state()
-            st.session_state.player = None
-            st.session_state.scores = {}
-            st.session_state.admin = True
-            st.rerun()
+    if st.session_state.baraonda_players:
+        st.markdown("### 📊 CLASSIFICHE IN TEMPO REALE")
+        col_bc1, col_bc2 = st.columns(2)
+        with col_bc1:
+            st.markdown("""<div class="pro-rank-container"><div class="pro-rank-header">🥅 CLASSIFICA PORTIERI</div>""", unsafe_allow_html=True)
+            for p in [x for x in st.session_state.baraonda_players if x["role"] == "portiere"]:
+                if "max_lives" not in p:
+                    p["max_lives"] = max(p["lives"], st.session_state.baraonda_initial_lives)
+                pallini_str = ("🟢 " * p["lives"]) + ("🔴 " * (p["max_lives"] - p["lives"]))
+                st.markdown(f"""<div class="pro-player-row"><span class="pro-rank-name">{p['name']}</span><span>{pallini_str}</span></div>""", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        with col_bc2:
+            st.markdown("""<div class="pro-rank-container"><div class="pro-rank-header">⚽️ CLASSIFICA ATTACCANTI</div>""", unsafe_allow_html=True)
+            for p in [x for x in st.session_state.baraonda_players if x["role"] == "attaccante"]:
+                if "max_lives" not in p:
+                    p["max_lives"] = max(p["lives"], st.session_state.baraonda_initial_lives)
+                pallini_str = ("🟢 " * p["lives"]) + ("🔴 " * (p["max_lives"] - p["lives"]))
+                st.markdown(f"""<div class="pro-player-row"><span class="pro-rank-name">{p['name']}</span><span>{pallini_str}</span></div>""", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
