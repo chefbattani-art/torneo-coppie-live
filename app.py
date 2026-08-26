@@ -1,4 +1,4 @@
-Import json
+import json
 import os
 import random
 import re
@@ -840,7 +840,7 @@ if db["stato"] == "setup" or st.session_state.get("mostra_setup", False):
                     "gol1": 0,
                     "gol2": 0,
                 })
-            turni_girone.append({"turno": t + 1, "partite": partite_turno})
+            turni_turno.append({"turno": t + 1, "partite": partite_turno})
             squadre = [squadre[0]] + [squadre[-1]] + squadre[1:-1]
 
           calendario_totale[g_nome] = turni_girone
@@ -1617,10 +1617,3 @@ elif db["stato"] == "fasi_finali":
         "terzo_quarto_b",
         "Tabellone Eliminazione Diretta - Fascia B",
     )
-
-
-
-
-
-
- Mi 
