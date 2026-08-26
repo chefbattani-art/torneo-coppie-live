@@ -1,4 +1,4 @@
-import json
+Import json
 import os
 import random
 import re
@@ -10,105 +10,56 @@ from streamlit_autorefresh import st_autorefresh
 st_autorefresh(interval=5000, debounce=False, key="auto_refresh_coppie")
 st.set_page_config(
     page_title="Torneo Coppie Fisse Live",
-    page_icon="🏆",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# --- STILE GRAFICO GLOBALE (DARK / GAMING NEON AZZURRO ELETTRICO LUMINOSO) ---
+# --- STILE GRAFICO GLOBALE (DARK / GAMING NEON) ---
 st.markdown(
     """
     <style>
-        /* Sfondo principale e font globale */
+        /* Sfondo principale dell'app in stile Dark Gaming */
         .stApp {
-            background: radial-gradient(circle at 50% 0%, #0a1128 0%, #030712 50%, #010206 100%);
+            background-color: #0d1117;
+            color: #e6edf3;
+        }
+        
+        /* Sidebar scura */
+        section[data-testid="stSidebar"] {
+            background-color: #161b22;
+            border-right: 1px solid #30363d;
+        }
+        
+        /* Card e box personalizzati */
+        .custom-card {
+            background: linear-gradient(135deg, #161b22 0%, #21262d 100%);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Box partita in corso / evidenziata stile Neon */
+        .match-live-card {
+            background: linear-gradient(135deg, #1f242c 0%, #29303b 100%);
+            border: 2px solid #ffae00;
+            border-radius: 14px;
+            padding: 18px;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(255, 174, 0, 0.25);
+        }
+
+        /* Intestazioni */
+        h1, h2, h3, h4 {
             color: #f0f6fc !important;
             font-family: 'Inter', sans-serif;
         }
         
-        /* Correzione per evitare testi invisibili nei container */
-        div.stMarkdown, div.stText, p, span, label, div[data-baseweb="select"] span {
-            color: #f0f6fc !important;
-        }
-
-        /* Tabelle e Dataframe in stile dark con accenni neon azzurri */
-        table, th, td {
-            background-color: #0d1629 !important;
-            color: #f0f6fc !important;
-        }
-        thead th {
-            background-color: #132247 !important;
-            color: #00f0ff !important;
-            border-bottom: 2px solid #00f0ff !important;
-            text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
-        }
-
-        /* Sidebar in stile gaming scuro */
-        section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #070d1a, #030712);
-            border-right: 1px solid #00f0ff;
-            box-shadow: 2px 0 15px rgba(0, 240, 255, 0.15);
-        }
-        section[data-testid="stSidebar"] * {
-            color: #f0f6fc !important;
-        }
-        
-        /* Box partita in corso con effetto Neon Giallo/Ambra */
-        .match-live-card {
-            background: linear-gradient(135deg, #1f1b0c 0%, #0d0b04 100%);
-            border: 2px solid #ffae00;
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(255, 174, 0, 0.3);
-        }
-
-        /* Intestazioni generali con bagliore neon azzurro */
-        h1, h2, h3, h4, h5, h6 {
-            color: #ffffff !important;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Pulsanti personalizzati con bagliore al passaggio */
+        /* Pulsanti personalizzati */
         div.stButton > button {
-            border-radius: 10px;
-            font-weight: 700;
-            border: 1px solid #00f0ff;
-            background: linear-gradient(180deg, #0e2a47, #071120);
-            color: #00f0ff !important;
-            padding: 12px 20px;
-            font-size: 16px;
-            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
-            transition: all 0.3s ease;
-        }
-        div.stButton > button:hover {
-            border-color: #00f0ff;
-            background: linear-gradient(180deg, #163d66, #0e2a47);
-            color: #ffffff !important;
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.7);
-        }
-
-        /* Selectbox e input */
-        div[data-baseweb="select"] > div {
-            background-color: #0d1629 !important;
-            color: #f0f6fc !important;
-            border-color: #00f0ff !important;
-            border-radius: 10px !important;
-            box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
-        }
-        
-        /* Pulsanti pillola per i punteggi */
-        div[data-testid="stPills"] button {
-            background-color: #0d1629 !important;
-            color: #f0f6fc !important;
-            border: 1px solid #1d4ed8 !important;
-            font-weight: bold !important;
-        }
-        div[data-testid="stPills"] button[aria-selected="true"] {
-            background-color: #0284c7 !important;
-            color: #ffffff !important;
-            border-color: #00f0ff !important;
-            box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+            border-radius: 8px;
+            font-weight: bold;
         }
     </style>
     """,
@@ -165,9 +116,10 @@ def pulisci_nome(testo):
 
 
 def evidenzia_nome_coppia(testo_match, mia_coppia):
+  """Evidenzia la propria coppia in rosso e grassetto all'interno della stringa della partita"""
   return testo_match.replace(
       mia_coppia,
-      f"<span style='color: #00f0ff; font-weight: 800; text-shadow: 0 0 12px rgba(0,240,255,0.8);'>{mia_coppia}</span>",
+      f"<span style='color: #ff5252; font-weight: 800;'>{mia_coppia}</span>",
   )
 
 
@@ -258,7 +210,7 @@ def genera_pdf_coppie():
   pdf = FPDF()
   pdf.add_page()
   pdf.set_font("Arial", "B", 16)
-  pdf.cell(0, 10, "Torneo Coppie Fisse - Schema Gironi", 0, 1, "C")
+  pdf.cell(0, 10, "Torneo a Coppie Fisse - Schema Gironi", 0, 1, "C")
   pdf.ln(5)
 
   for g_nome, turni in db["calendario_gironi"].items():
@@ -451,15 +403,15 @@ else:
 st.sidebar.markdown("---")
 
 
-# --- INTERFACCIA PRINCIPALE CON TITOLI NEON LUMINOSI ---
+# --- INTERFACCIA PRINCIPALE ---
 st.markdown(
     """
     <div style="text-align: left; margin-bottom: 10px;">
-        <h1 style="font-size: 28px; white-space: nowrap; margin: 0; padding: 0; color: #ffffff; text-shadow: 0 0 15px rgba(0,240,255,0.7), 0 0 30px rgba(0,240,255,0.4);">
+        <h1 style="font-size: 26px; white-space: nowrap; margin: 0; padding: 0; color: #f0f6fc;">
             🏆 Torneo Coppie Fisse Live
         </h1>
-        <p style="font-size: 15px; color: #00f0ff; margin: 6px 0 0 0; font-weight: 600; text-shadow: 0 0 8px rgba(0,240,255,0.5);">
-            Regolamento 3 Tocchi Uisp • Modalità Gaming Neon Azzurro Elettrico
+        <p style="font-size: 16px; color: #8b949e; margin: 4px 0 0 0; font-weight: 500;">
+            Regolamento 3 Tocchi Uisp
         </p>
     </div>
     """,
@@ -476,8 +428,8 @@ with st.expander("ℹ️ Come funziona il torneo"):
 
 st.markdown(
     """
-    <div style="padding: 12px 14px; background: linear-gradient(135deg, #0d234a 0%, #030b1c 100%); border: 2px solid #00f0ff; border-radius: 10px; font-size: 14px; color: #ffffff; margin-bottom: 15px; font-weight: bold; line-height: 1.5; box-shadow: 0 0 20px rgba(0,240,255,0.4);">
-        🚨 <span style="color: #00f0ff; text-shadow: 0 0 8px rgba(0,240,255,0.8);">REGOLA CHIAVE:</span> Chi vince è pregato di inserire il risultato esatto e chi è in ordine della coda delle partite di essere pronto a salire al primo calcetto che si libera.
+    <div style="padding: 12px 14px; background-color: #3d1b1b; border-left: 5px solid #f85149; border-radius: 6px; font-size: 14px; color: #ff7b72; margin-bottom: 15px; font-weight: bold; line-height: 1.5;">
+        🚨 Chi vince è pregato di inserire il risultato esatto e chi è in ordine della coda delle partite di essere pronto a salire al primo calcetto che si libera.
     </div>
     """,
     unsafe_allow_html=True,
@@ -485,8 +437,8 @@ st.markdown(
 
 st.markdown(
     """
-    <div style="padding: 10px; background: #0d1629; border: 1.5px solid #00f0ff; border-radius: 10px; text-align: center; margin-bottom: 15px; box-shadow: 0 0 12px rgba(0,240,255,0.25);">
-        🔄 <a href="javascript:window.location.reload(true)" style="text-decoration: none; color: #00f0ff; font-weight: bold; font-size: 15px; text-shadow: 0 0 8px rgba(0,240,255,0.6);">
+    <div style="padding: 10px; background-color: #161b22; border: 1px solid #30363d; border-radius: 8px; text-align: center; margin-bottom: 15px;">
+        🔄 <a href="javascript:window.location.reload(true)" style="text-decoration: none; color: #58a6ff; font-weight: bold; font-size: 15px;">
             Aggiorna la pagina dal browser ogni volta che vuoi vedere gli aggiornamenti del torneo in corso
         </a>
     </div>
@@ -494,7 +446,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- SELETTORE COPPIA (CON BYPASS PER AMMINISTRATORE) ---
+# --- SELETTORE COPPIA (PERSISTENTE TRAMITE URL) ---
 tutte_le_coppie = []
 for g_lst in db["gironi"].values():
   tutte_le_coppie.extend(g_lst)
@@ -523,13 +475,7 @@ if coppia_selezionata != coppia_url:
   st.query_params["coppia"] = coppia_selezionata
   st.rerun()
 
-# LOGICA DI BLOCCO / BYPASS ADMIN
-if is_admin:
-  st.success(
-      "🛡️ **Modalità Amministratore attiva:** Accesso completo sbloccato senza"
-      " obbligo di selezione coppia."
-  )
-elif coppia_selezionata == "-- Seleziona la tua coppia per accedere --":
+if coppia_selezionata == "-- Seleziona la tua coppia per accedere --":
   st.warning(
       "⚠️ **Attenzione:** Devi selezionare la tua coppia dal menu a tendina qui"
       " sopra per sbloccare l'accesso al torneo, vedere le partite e inserire i"
@@ -539,292 +485,264 @@ elif coppia_selezionata == "-- Seleziona la tua coppia per accedere --":
 else:
   st.success(f"✅ Accesso effettuato come: **{coppia_selezionata}**")
 
-# Se l'utente è admin e non ha scelto la coppia, gestiamo una visualizzazione pulita senza cruscotto personale
-if not is_admin or coppia_selezionata != "-- Seleziona la tua coppia per accedere --":
-  if coppia_selezionata != "-- Seleziona la tua coppia per accedere --":
-    # --- CRUSCOTTO PERSONALE / OCCHIO SULLA COPPIA SELEZIONATA (STILE NEON AZZURRO) ---
-    with st.expander(
-        f"👁️ Segui la tua coppia: {coppia_selezionata}", expanded=True
-    ):
-      girone_mio = None
-      pos_mia = None
-      info_mie = None
-      for g_nome, lista_c in db["gironi"].items():
-        if coppia_selezionata in lista_c:
-          girone_mio = g_nome
-          ricalcola_classifiche_gironi()
-          if g_nome in db["punti_gironi"]:
-            dati_g = db["punti_gironi"][g_nome]
-            sorted_c = sorted(
-                dati_g.items(),
-                key=lambda x: (
-                    x[1]["punti"],
-                    x[1]["scontri_diretti_pt"],
-                    x[1]["dr"],
-                    x[1]["gf"],
-                ),
-                reverse=True,
-            )
-            for idx, (c_nome, stats) in enumerate(sorted_c):
-              if c_nome == coppia_selezionata:
-                pos_mia = idx + 1
-                info_mie = stats
-          break
+  # --- CRUSCOTTO PERSONALE / OCCHIO SULLA COPPIA SELEZIONATA (STILE DARK GAMING) ---
+  with st.expander(
+      f"👁️ Segui la tua coppia: {coppia_selezionata}", expanded=True
+  ):
+    girone_mio = None
+    pos_mia = None
+    info_mie = None
+    for g_nome, lista_c in db["gironi"].items():
+      if coppia_selezionata in lista_c:
+        girone_mio = g_nome
+        ricalcola_classifiche_gironi()
+        if g_nome in db["punti_gironi"]:
+          dati_g = db["punti_gironi"][g_nome]
+          sorted_c = sorted(
+              dati_g.items(),
+              key=lambda x: (
+                  x[1]["punti"],
+                  x[1]["scontri_diretti_pt"],
+                  x[1]["dr"],
+                  x[1]["gf"],
+              ),
+              reverse=True,
+          )
+          for idx, (c_nome, stats) in enumerate(sorted_c):
+            if c_nome == coppia_selezionata:
+              pos_mia = idx + 1
+              info_mie = stats
+        break
 
-      st.markdown(
-          f"""
-          <div style="background: linear-gradient(135deg, #081b33 0%, #030712 100%); border: 2.5px solid #00f0ff; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 0 30px rgba(0,240,255,0.4);">
-              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #00f0ff; font-weight: bold; margin-bottom: 4px; text-shadow: 0 0 6px rgba(0,240,255,0.6);">Riepilogo Squadra</div>
-              <div style="font-size: 22px; font-weight: 800; color: #ffffff; margin-bottom: 14px; text-shadow: 0 0 15px rgba(0,240,255,0.8);">🤝 {coppia_selezionata}</div>
-              <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                  <div style="background: #040914; border: 1.5px solid #00f0ff; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 110px; text-align: center; box-shadow: 0 0 10px rgba(0,240,255,0.2);">
-                      <div style="font-size: 11px; color: #93c5fd; font-weight: bold;">GIRONE</div>
-                      <div style="font-size: 18px; font-weight: 700; color: #00f0ff; margin-top: 2px; text-shadow: 0 0 8px rgba(0,240,255,0.6);">{girone_mio if girone_mio else 'N.D.'}</div>
-                  </div>
-                  <div style="background: #040914; border: 1.5px solid #00f0ff; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 110px; text-align: center; box-shadow: 0 0 10px rgba(0,240,255,0.2);">
-                      <div style="font-size: 11px; color: #93c5fd; font-weight: bold;">POSIZIONE</div>
-                      <div style="font-size: 18px; font-weight: 700; color: #3fb950; margin-top: 2px; text-shadow: 0 0 8px rgba(63,185,80,0.6);">{str(pos_mia) + '° posto' if pos_mia else 'N.D.'}</div>
-                  </div>
-                  <div style="background: #040914; border: 1.5px solid #00f0ff; border-radius: 10px; padding: 12px 16px; flex: 1; min-width: 110px; text-align: center; box-shadow: 0 0 10px rgba(0,240,255,0.2);">
-                      <div style="font-size: 11px; color: #93c5fd; font-weight: bold;">PUNTI / DR</div>
-                      <div style="font-size: 18px; font-weight: 700; color: #fbbf24; margin-top: 2px; text-shadow: 0 0 8px rgba(251,191,36,0.6);">{info_mie['punti'] if info_mie else 0} pt <span style="font-size: 12px; font-weight: normal; color: #93c5fd;">(DR: {info_mie['dr'] if info_mie else 0})</span></div>
-                  </div>
-              </div>
-          </div>
-          """,
-          unsafe_allow_html=True,
+    st.markdown(
+        f"""
+        <div style="background: linear-gradient(135deg, #161b22 0%, #21262d 100%); border: 1px solid #30363d; border-radius: 12px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+            <div style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #8b949e; font-weight: bold; margin-bottom: 4px;">Riepilogo Squadra</div>
+            <div style="font-size: 20px; font-weight: 800; color: #f0f6fc; margin-bottom: 12px;">🤝 {coppia_selezionata}</div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 110px; text-align: center;">
+                    <div style="font-size: 11px; color: #8b949e; font-weight: bold;">GIRONE</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #58a6ff; margin-top: 2px;">{girone_mio if girone_mio else 'N.D.'}</div>
+                </div>
+                <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 110px; text-align: center;">
+                    <div style="font-size: 11px; color: #8b949e; font-weight: bold;">POSIZIONE</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #3fb950; margin-top: 2px;">{str(pos_mia) + '° posto' if pos_mia else 'N.D.'}</div>
+                </div>
+                <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px; flex: 1; min-width: 110px; text-align: center;">
+                    <div style="font-size: 11px; color: #8b949e; font-weight: bold;">PUNTI / DR</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #f0883e; margin-top: 2px;">{info_mie['punti'] if info_mie else 0} pt <span style="font-size: 12px; font-weight: normal; color: #8b949e;">(DR: {info_mie['dr'] if info_mie else 0})</span></div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("#### 🔍 Le tue partite nel girone:")
+
+    partite_mie_in_corso = []
+    partite_mie_in_coda = []
+    partite_mie_da_giocare_dopo = []
+    partite_mie_fatte = []
+
+    if girone_mio and girone_mio in db["calendario_gironi"]:
+      max_t = (
+          max([len(t) for t in db["calendario_gironi"].values()])
+          if db["calendario_gironi"]
+          else 0
       )
+      tutte_p_girone = []
+      for t_num in range(1, max_t + 1):
+        for g_n, turni in db["calendario_gironi"].items():
+          for t_obj in turni:
+            if t_obj["turno"] == t_num:
+              tutte_p_girone.extend(t_obj["partite"])
 
-      st.markdown(
-          "<h4 style='color: #00f0ff; text-shadow: 0 0 10px"
-          " rgba(0,240,255,0.6);'>🔍 Le tue partite nel girone:</h4>",
-          unsafe_allow_html=True,
-      )
+      da_giocare_tot = [
+          p for p in tutte_p_girone if not p.get("giocata", False)
+      ]
+      num_tavoli_conf = db.get("num_tavoli", 6)
+      coda_globale = da_giocare_tot[:num_tavoli_conf]
 
-      partite_mie_in_corso = []
-      partite_mie_in_coda = []
-      partite_mie_da_giocare_dopo = []
-      partite_mie_fatte = []
-
-      if girone_mio and girone_mio in db["calendario_gironi"]:
-        max_t = (
-            max([len(t) for t in db["calendario_gironi"].values()])
-            if db["calendario_gironi"]
-            else 0
-        )
-        tutte_p_girone = []
-        for t_num in range(1, max_t + 1):
-          for g_n, turni in db["calendario_gironi"].items():
-            for t_obj in turni:
-              if t_obj["turno"] == t_num:
-                tutte_p_girone.extend(t_obj["partite"])
-
-        da_giocare_tot = [
-            p for p in tutte_p_girone if not p.get("giocata", False)
-        ]
-        num_tavoli_conf = db.get("num_tavoli", 6)
-        coda_globale = da_giocare_tot[:num_tavoli_conf]
-
-        for turno_obj in db["calendario_gironi"][girone_mio]:
-          for m in turno_obj["partite"]:
-            if m["c1"] == coppia_selezionata or m["c2"] == coppia_selezionata:
-              if m.get("giocata", False):
-                partite_mie_fatte.append(m)
-              elif m.get("in_corso", False):
-                partite_mie_in_corso.append(m)
-              elif m in coda_globale:
-                partite_mie_in_coda.append(m)
-              else:
-                partite_mie_da_giocare_dopo.append(m)
-
-      col_m1, col_m2 = st.columns(2)
-
-      with col_m1:
-        st.markdown(
-            "<p style='color: #00f0ff; font-weight: bold; text-shadow: 0 0"
-            " 8px rgba(0,240,255,0.5);'>🔥 Partite in Corso / In Coda per"
-            " te:</p>",
-            unsafe_allow_html=True,
-        )
-        if not partite_mie_in_corso and not partite_mie_in_coda:
-          st.info("Nessuna partita attiva o in coda adesso per te.")
-        else:
-          for m in partite_mie_in_corso:
-            testo_scontro = f"{m['c1']} vs {m['c2']}"
-            testo_evidenziato = evidenzia_nome_coppia(
-                testo_scontro, coppia_selezionata
-            )
-            match_id_mio = m["id"]
-            st.markdown(
-                f"""
-                      <div style="background: linear-gradient(135deg, #261e08 0%, #141002 100%); border: 2px solid #ffae00; padding: 14px; border-radius: 10px; margin-bottom: 8px; text-align: center; box-shadow: 0 0 15px rgba(255,174,0,0.3);">
-                          <span style="color: #ffae00; font-weight: bold; font-size: 13px; text-shadow: 0 0 8px rgba(255,174,0,0.6);">🏟️ IN CORSO (Biliardino {m.get('tavolo', 'N/D')})</span><br>
-                          <b style="color: #ffffff; font-size: 15px; display: block; margin-top: 4px;">{testo_evidenziato}</b>
-                      </div>
-                      """,
-                unsafe_allow_html=True,
-            )
-
-            with st.expander(
-                f"📝 Inserisci Risultato Finale (Tav. {m.get('tavolo', '')})"
-            ):
-              gol_p1_mio = st.pills(
-                  f"Gol {m['c1']}",
-                  options=[0, 1, 2, 3, 4, 5, 6, 7],
-                  default=int(m.get("gol1", 0)),
-                  key=f"user_pers_g1_{match_id_mio}",
-              )
-              gol_p2_mio = st.pills(
-                  f"Gol {m['c2']}",
-                  options=[0, 1, 2, 3, 4, 5, 6, 7],
-                  default=int(m.get("gol2", 0)),
-                  key=f"user_pers_g2_{match_id_mio}",
-              )
-              if st.button(
-                  "✅ Conferma e Registra Risultato",
-                  key=f"btn_save_pers_{match_id_mio}",
-                  use_container_width=True,
-              ):
-                m["gol1"] = int(gol_p1_mio) if gol_p1_mio is not None else 0
-                m["gol2"] = int(gol_p2_mio) if gol_p2_mio is not None else 0
-                m["giocata"] = True
-                m["in_corso"] = False
-                m["tavolo"] = None
-                ricalcola_classifiche_gironi()
-                salva_dati(db)
-                st.success(
-                    "Risultato registrato con successo! Classifica aggiornata e"
-                    " tavolo liberato."
-                )
-                st.rerun()
-
-          for m in partite_mie_in_coda:
-            testo_scontro = f"{m['c1']} vs {m['c2']}"
-            testo_evidenziato = evidenzia_nome_coppia(
-                testo_scontro, coppia_selezionata
-            )
-            st.markdown(
-                f"""
-                      <div style="background: linear-gradient(135deg, #081b33 0%, #030712 100%); border: 2px solid #00f0ff; padding: 12px; border-radius: 10px; margin-bottom: 8px; text-align: center; color: #00f0ff; box-shadow: 0 0 15px rgba(0,240,255,0.3);">
-                          <b style="font-size: 13px; text-shadow: 0 0 6px rgba(0,240,255,0.8);">⏳ IN CODA (Prossimo turno)</b><br>
-                          <b style="color: #ffffff; font-size: 15px; display: block; margin-top: 4px;">{testo_evidenziato}</b>
-                      </div>
-                      """,
-                unsafe_allow_html=True,
-            )
-
-        st.markdown("---")
-        st.markdown(
-            "<p style='color: #00f0ff; font-weight: bold; text-shadow: 0 0"
-            " 8px rgba(0,240,255,0.5);'>📅 Tutte le partite ancora da"
-            " disputare:</p>",
-            unsafe_allow_html=True,
-        )
-        if not partite_mie_da_giocare_dopo:
-          st.info("Non hai altre partite future in attesa nei prossimi turni.")
-        else:
-          for m in partite_mie_da_giocare_dopo:
-            testo_scontro = f"{m['c1']} vs {m['c2']}"
-            testo_evidenziato = evidenzia_nome_coppia(
-                testo_scontro, coppia_selezionata
-            )
-            st.markdown(
-                f"""
-                      <div style="background: #0d1629; border: 1.5px solid #00f0ff; padding: 10px; border-radius: 8px; margin-bottom: 6px; text-align: center; box-shadow: 0 0 8px rgba(0,240,255,0.2);">
-                          <span style="font-size: 13px; color: #e2e8f0;"><b>{testo_evidenziato}</b></span>
-                      </div>
-                      """,
-                unsafe_allow_html=True,
-            )
-
-      with col_m2:
-        st.markdown(
-            "<p style='color: #3fb950; font-weight: bold; text-shadow: 0 0"
-            " 8px rgba(63,185,80,0.5);'>✅ Partite già effettuate:</p>",
-            unsafe_allow_html=True,
-        )
-        if not partite_mie_fatte:
-          st.info("Non hai ancora disputato partite.")
-        else:
-          for m in partite_mie_fatte:
-            testo_scontro = f"{m['c1']} vs {m['c2']}"
-            testo_evidenziato = evidenzia_nome_coppia(
-                testo_scontro, coppia_selezionata
-            )
-            st.markdown(
-                f"""
-                      <div style="background: #0d1629; border: 1.5px solid #238636; padding: 10px; border-radius: 8px; margin-bottom: 6px; text-align: center; box-shadow: 0 0 10px rgba(35,134,54,0.3);">
-                          <span style="font-size: 13px; color: #93c5fd;">{testo_evidenziato}</span><br>
-                          <b style="color: #3fb950; font-size: 15px; text-shadow: 0 0 6px rgba(63,185,80,0.6);">Risultato: {m['gol1']} - {m['gol2']}</b>
-                      </div>
-                      """,
-                unsafe_allow_html=True,
-            )
-
-      if girone_mio:
-        st.markdown("---")
-        st.markdown(
-            f"<h4 style='color: #00f0ff; text-shadow: 0 0 10px"
-            f" rgba(0,240,255,0.6);'>📊 Classifica Completa - {girone_mio}"
-            " (Verde: Fascia A | Rosso: Fascia B)</h4>",
-            unsafe_allow_html=True,
-        )
-        dati_girone = db["punti_gironi"][girone_mio]
-        sorted_c = sorted(
-            dati_girone.items(),
-            key=lambda x: (
-                x[1]["punti"],
-                x[1]["scontri_diretti_pt"],
-                x[1]["dr"],
-                x[1]["gf"],
-            ),
-            reverse=True,
-        )
-
-        data_g = []
-        for idx, (coppia, info) in enumerate(sorted_c):
-          gioc, tot = calcola_partite_giocate_coppia(girone_mio, coppia)
-          fascia_assegnata = "⭐ A" if idx < 4 else "🔻 B"
-          data_g.append({
-              "Pos": f"{idx+1}°",
-              "Coppia": coppia,
-              "Pt": info["punti"],
-              "DR": info["dr"],
-              "GF": info["gf"],
-              "Gioc": f"{gioc}/{tot}",
-              "Fascia": fascia_assegnata,
-          })
-
-        df_g = pd.DataFrame(data_g)
-
-        def colora_fasce_mio_girone(val):
-          try:
-            pos = int(str(val).replace("°", ""))
-            if pos <= 4:
-              return (
-                  "background-color: #062329; color: #00f0ff; font-weight:"
-                  " bold;"
-              )
+      for turno_obj in db["calendario_gironi"][girone_mio]:
+        for m in turno_obj["partite"]:
+          if m["c1"] == coppia_selezionata or m["c2"] == coppia_selezionata:
+            if m.get("giocata", False):
+              partite_mie_fatte.append(m)
+            elif m.get("in_corso", False):
+              partite_mie_in_corso.append(m)
+            elif m in coda_globale:
+              partite_mie_in_coda.append(m)
             else:
-              return "background-color: #3d1b1b; color: #ff7b72;"
-          except:
-            return ""
+              partite_mie_da_giocare_dopo.append(m)
 
-        if not df_g.empty:
-          df_styled = df_g.style.map(colora_fasce_mio_girone, subset=["Pos"])
-          st.dataframe(df_styled, hide_index=True, use_container_width=True)
-        else:
-          st.dataframe(df_g, hide_index=True, use_container_width=True)
+    col_m1, col_m2 = st.columns(2)
+
+    with col_m1:
+      st.markdown("**🔥 Partite in Corso / In Coda per te:**")
+      if not partite_mie_in_corso and not partite_mie_in_coda:
+        st.info("Nessuna partita attiva o in coda adesso per te.")
+      else:
+        for m in partite_mie_in_corso:
+          testo_scontro = f"{m['c1']} vs {m['c2']}"
+          testo_evidenziato = evidenzia_nome_coppia(
+              testo_scontro, coppia_selezionata
+          )
+          match_id_mio = m["id"]
+          st.markdown(
+              f"""
+                    <div style="background-color: #26210f; border: 2px solid #ffae00; padding: 12px; border-radius: 8px; margin-bottom: 6px; text-align: center;">
+                        <span style="color: #ffae00; font-weight: bold;">🏟️ IN CORSO (Biliardino {m.get('tavolo', 'N/D')})</span><br>
+                        <b style="color: #f0f6fc;">{testo_evidenziato}</b>
+                    </div>
+                    """,
+              unsafe_allow_html=True,
+          )
+
+          with st.expander(
+              f"📝 Inserisci Risultato Finale (Tav. {m.get('tavolo', '')})"
+          ):
+            gol_p1_mio = st.pills(
+                f"Gol {m['c1']}",
+                options=[0, 1, 2, 3, 4, 5, 6, 7],
+                default=int(m.get("gol1", 0)),
+                key=f"user_pers_g1_{match_id_mio}",
+            )
+            gol_p2_mio = st.pills(
+                f"Gol {m['c2']}",
+                options=[0, 1, 2, 3, 4, 5, 6, 7],
+                default=int(m.get("gol2", 0)),
+                key=f"user_pers_g2_{match_id_mio}",
+            )
+            if st.button(
+                "✅ Conferma e Registra Risultato",
+                key=f"btn_save_pers_{match_id_mio}",
+                use_container_width=True,
+            ):
+              m["gol1"] = int(gol_p1_mio) if gol_p1_mio is not None else 0
+              m["gol2"] = int(gol_p2_mio) if gol_p2_mio is not None else 0
+              m["giocata"] = True
+              m["in_corso"] = False
+              m["tavolo"] = None
+              ricalcola_classifiche_gironi()
+              salva_dati(db)
+              st.success(
+                  "Risultato registrato con successo! Classifica aggiornata e"
+                  " tavolo liberato."
+              )
+              st.rerun()
+
+        for m in partite_mie_in_coda:
+          testo_scontro = f"{m['c1']} vs {m['c2']}"
+          testo_evidenziato = evidenzia_nome_coppia(
+              testo_scontro, coppia_selezionata
+          )
+          st.markdown(
+              f"""
+                    <div style="background-color: #0f2316; border: 1.5px solid #238636; padding: 10px; border-radius: 8px; margin-bottom: 6px; text-align: center; color: #3fb950;">
+                        <b>⏳ IN CODA (Prossimo turno)</b><br>
+                        <b style="color: #f0f6fc;">{testo_evidenziato}</b>
+                    </div>
+                    """,
+              unsafe_allow_html=True,
+          )
+
+      st.markdown("---")
+      st.markdown("**📅 Tutte le partite ancora da disputare:**")
+      if not partite_mie_da_giocare_dopo:
+        st.info("Non hai altre partite future in attesa nei prossimi turni.")
+      else:
+        for m in partite_mie_da_giocare_dopo:
+          testo_scontro = f"{m['c1']} vs {m['c2']}"
+          testo_evidenziato = evidenzia_nome_coppia(
+              testo_scontro, coppia_selezionata
+          )
+          st.markdown(
+              f"""
+                    <div style="background-color: #161b22; border: 1px solid #30363d; padding: 8px; border-radius: 6px; margin-bottom: 6px; text-align: center;">
+                        <span style="font-size: 13px; color: #c9d1d9;"><b>{testo_evidenziato}</b></span>
+                    </div>
+                    """,
+              unsafe_allow_html=True,
+          )
+
+    with col_m2:
+      st.markdown("**✅ Partite già effettuate:**")
+      if not partite_mie_fatte:
+        st.info("Non hai ancora disputato partite.")
+      else:
+        for m in partite_mie_fatte:
+          testo_scontro = f"{m['c1']} vs {m['c2']}"
+          testo_evidenziato = evidenzia_nome_coppia(
+              testo_scontro, coppia_selezionata
+          )
+          st.markdown(
+              f"""
+                    <div style="background-color: #161b22; border: 1px solid #30363d; padding: 8px; border-radius: 6px; margin-bottom: 6px; text-align: center;">
+                        <span style="font-size: 13px; color: #8b949e;">{testo_evidenziato}</span><br>
+                        <b style="color: #3fb950; font-size: 15px;">Risultato: {m['gol1']} - {m['gol2']}</b>
+                    </div>
+                    """,
+              unsafe_allow_html=True,
+          )
+
+    if girone_mio:
+      st.markdown("---")
+      st.markdown(
+          f"#### 📊 Classifica Completa - {girone_mio} (Verde: Fascia A |"
+          " Rosso: Fascia B)"
+      )
+      dati_girone = db["punti_gironi"][girone_mio]
+      sorted_c = sorted(
+          dati_girone.items(),
+          key=lambda x: (
+              x[1]["punti"],
+              x[1]["scontri_diretti_pt"],
+              x[1]["dr"],
+              x[1]["gf"],
+          ),
+          reverse=True,
+      )
+
+      data_g = []
+      for idx, (coppia, info) in enumerate(sorted_c):
+        gioc, tot = calcola_partite_giocate_coppia(girone_mio, coppia)
+        fascia_assegnata = "⭐ A" if idx < 4 else "🔻 B"
+        data_g.append({
+            "Pos": f"{idx+1}°",
+            "Coppia": coppia,
+            "Pt": info["punti"],
+            "DR": info["dr"],
+            "GF": info["gf"],
+            "Gioc": f"{gioc}/{tot}",
+            "Fascia": fascia_assegnata,
+        })
+
+      df_g = pd.DataFrame(data_g)
+
+      def colora_fasce_mio_girone(val):
+        try:
+          pos = int(str(val).replace("°", ""))
+          if pos <= 4:
+            return (
+                "background-color: #0f2316; color: #3fb950; font-weight: bold;"
+            )
+          else:
+            return "background-color: #3d1b1b; color: #ff7b72;"
+        except:
+          return ""
+
+      if not df_g.empty:
+        df_styled = df_g.style.map(colora_fasce_mio_girone, subset=["Pos"])
+        st.dataframe(df_styled, hide_index=True, use_container_width=True)
+      else:
+        st.dataframe(df_g, hide_index=True, use_container_width=True)
 
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
 # 1. SETUP
 if db["stato"] == "setup" or st.session_state.get("mostra_setup", False):
-  st.markdown(
-      "<h3 style='color: #00f0ff; text-shadow: 0 0 10px"
-      " rgba(0,240,255,0.6);'>1. Configurazione Iniziale Torneo a Coppie</h3>",
-      unsafe_allow_html=True,
-  )
+  st.subheader("1. Configurazione Iniziale Torneo a Coppie")
 
   if not is_admin:
     st.warning(
@@ -922,10 +840,10 @@ if db["stato"] == "setup" or st.session_state.get("mostra_setup", False):
                     "gol1": 0,
                     "gol2": 0,
                 })
-            turni_turno.append({"turno": t + 1, "partite": partite_turno})
+            turni_girone.append({"turno": t + 1, "partite": partite_turno})
             squadre = [squadre[0]] + [squadre[-1]] + squadre[1:-1]
 
-          calendario_totale[g_nome] = turni_turno
+          calendario_totale[g_nome] = turni_girone
 
         db["calendario_gironi"] = calendario_totale
         db["stato"] = "gironi"
@@ -1015,20 +933,12 @@ if db["stato"] == "gironi":
       key=lambda x: x.get("tavolo") if x.get("tavolo") is not None else 999,
   )
 
-  st.markdown(
-      "<h3 style='color: #00f0ff; text-shadow: 0 0 10px"
-      " rgba(0,240,255,0.6);'>⚡ Stato dei Biliardini e Coda Incontri</h3>",
-      unsafe_allow_html=True,
-  )
+  st.subheader("⚡ Stato dei Biliardini e Coda Incontri")
 
   col_ic, col_coda = st.columns(2)
 
   with col_ic:
-    st.markdown(
-        "<h4 style='color: #ffae00; text-shadow: 0 0 8px"
-        " rgba(255,174,0,0.6);'>🔥 Partite in Corso ai Tavoli</h4>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("#### 🔥 Partite in Corso ai Tavoli")
     if not partite_in_corso:
       st.info("Nessuna partita in corso al momento.")
     else:
@@ -1049,11 +959,11 @@ if db["stato"] == "gironi":
         with st.container():
           st.markdown(
               f"""
-                        <div style="background: linear-gradient(135deg, #261e08 0%, #100c02 100%); border: 3px solid #ffae00; padding: 18px; border-radius: 14px; margin-bottom: 12px; text-align: center; box-shadow: 0 4px 20px rgba(255,174,0,0.3);">
-                            <div style="font-size: 15px; color: #ffae00; font-weight: bold; margin-bottom: 8px; text-shadow: 0 0 8px rgba(255,174,0,0.6);">{tavolo_str}</div>
-                            <div style="font-size: 17px; font-weight: bold; color: #ffffff; line-height: 1.4;">🤝 {m['c1']}</div>
-                            <div style="margin: 4px 0; font-size: 13px; font-weight: bold; color: #00f0ff;">VS</div>
-                            <div style="font-size: 17px; font-weight: bold; color: #ffffff; line-height: 1.4;">🤝 {m['c2']}</div>
+                        <div style="background-color: #26210f; border: 3px solid #ffae00; padding: 16px; border-radius: 12px; margin-bottom: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                            <div style="font-size: 15px; color: #ffae00; font-weight: bold; margin-bottom: 6px;">{tavolo_str}</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #f0f6fc; line-height: 1.4;">🤝 {m['c1']}</div>
+                            <div style="margin: 4px 0; font-size: 13px; font-weight: bold; color: #8b949e;">VS</div>
+                            <div style="font-size: 16px; font-weight: bold; color: #f0f6fc; line-height: 1.4;">🤝 {m['c2']}</div>
                         </div>
                         """,
               unsafe_allow_html=True,
@@ -1065,7 +975,7 @@ if db["stato"] == "gironi":
             ):
               st.markdown(
                   f"<div style='font-weight: bold; font-size: 15px; color:"
-                  f" #ffffff; margin-bottom: 4px;'>⚽ {m['c1']}</div>",
+                  f" #f0f6fc; margin-bottom: 4px;'>⚽ {m['c1']}</div>",
                   unsafe_allow_html=True,
               )
               gol_p1 = st.pills(
@@ -1078,7 +988,7 @@ if db["stato"] == "gironi":
 
               st.markdown(
                   f"<div style='font-weight: bold; font-size: 15px; color:"
-                  f" #ffffff; margin-top: 12px; margin-bottom: 4px;'>⚽ {m['c2']}</div>",
+                  f" #f0f6fc; margin-top: 12px; margin-bottom: 4px;'>⚽ {m['c2']}</div>",
                   unsafe_allow_html=True,
               )
               gol_p2 = st.pills(
@@ -1120,34 +1030,28 @@ if db["stato"] == "gironi":
                 m["in_corso"] = False
                 m["tavolo"] = None
                 salva_dati(db)
-                st.success("Tavolo liberato con successo!")
                 st.rerun()
 
           st.markdown(
-              "<hr style='border-color: #00f0ff; opacity: 0.3; margin: 10px 0"
-              " 20px 0;'>",
+              "<hr style='border-color: #30363d; margin: 10px 0 20px 0;'>",
               unsafe_allow_html=True,
           )
 
   with col_coda:
     partite_in_coda_correnti = partite_da_giocare[:num_tavoli]
 
-    st.markdown(
-        "<h4 style='color: #00f0ff; text-shadow: 0 0 8px"
-        " rgba(0,240,255,0.6);'>⏳ In Coda (Prossimi Incontri)</h4>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"#### ⏳ In Coda (Prossimi Incontri)")
     if not partite_in_coda_correnti:
       st.info("La coda è vuota o tutte le partite sono in corso/giocate.")
     else:
       for idx, m in enumerate(partite_in_coda_correnti):
         st.markdown(
             f"""
-                    <div style="background: linear-gradient(135deg, #081b33 0%, #030712 100%); border: 2px solid #00f0ff; padding: 14px; border-radius: 10px; margin-bottom: 10px; color: #00f0ff; text-align: center; box-shadow: 0 0 15px rgba(0,240,255,0.3);">
-                        <b style="font-size: 13px; text-shadow: 0 0 6px rgba(0,240,255,0.8);">⏳ {idx+1}. {m['girone']}</b><br>
-                        <div style="font-weight: bold; font-size: 14px; margin-top: 4px; color: #ffffff;">{m['c1']}</div>
-                        <div style="font-size: 11px; color: #00f0ff; text-shadow: 0 0 6px rgba(0,240,255,0.6);">VS</div>
-                        <div style="font-weight: bold; font-size: 14px; color: #ffffff;">{m['c2']}</div>
+                    <div style="background-color: #0f2316; border: 1.5px solid #238636; padding: 12px; border-radius: 8px; margin-bottom: 8px; color: #3fb950; text-align: center;">
+                        <b>⏳ {idx+1}. {m['girone']}</b><br>
+                        <div style="font-weight: bold; font-size: 14px; margin-top: 4px; color: #f0f6fc;">{m['c1']}</div>
+                        <div style="font-size: 11px; color: #3fb950;">VS</div>
+                        <div style="font-weight: bold; font-size: 14px; color: #f0f6fc;">{m['c2']}</div>
                     </div>
                     """,
             unsafe_allow_html=True,
@@ -1155,17 +1059,9 @@ if db["stato"] == "gironi":
 
   st.markdown("---")
 
-  # --- SEZIONE CLASSIFICHE NEON AZZURRO ELETTRICO LUMINOSO ---
-  st.markdown(
-      """
-      <div style="background: linear-gradient(90deg, #082852 0%, #030b1c 100%); border: 2.5px solid #00f0ff; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 0 25px rgba(0,240,255,0.5); text-align: center;">
-          <h3 style="margin: 0; color: #ffffff; font-size: 20px; text-shadow: 0 0 15px rgba(0,240,255,0.8), 0 0 30px rgba(0,240,255,0.4);">📊 CLASSIFICHE GENERALI DEI GIRONI</h3>
-          <p style="margin: 6px 0 0 0; color: #00f0ff; font-size: 13px; font-weight: bold; text-shadow: 0 0 8px rgba(0,240,255,0.6);">Top 4 in zona Promozione (Fascia A) • Dal 5° in poi in Fascia B</p>
-      </div>
-      """,
-      unsafe_allow_html=True,
+  st.subheader(
+      "📊 Classifiche dei Gironi (Verde: Fascia A | Rosso: Fascia B)"
   )
-
   nomi_gironi_chiavi = list(db["gironi"].keys())
   for i in range(0, len(nomi_gironi_chiavi), 2):
     col_gironi = st.columns(2)
@@ -1173,15 +1069,7 @@ if db["stato"] == "gironi":
       if i + j < len(nomi_gironi_chiavi):
         g_nome = nomi_gironi_chiavi[i + j]
         with col_gironi[j]:
-          # Header del singolo girone con neon azzurro brillante
-          st.markdown(
-              f"""
-              <div style="background: #0d1629; border-top: 3px solid #00f0ff; border-left: 1px solid #00f0ff; border-right: 1px solid #00f0ff; padding: 12px 14px; border-radius: 10px 10px 0 0; font-weight: bold; font-size: 16px; color: #ffffff; text-shadow: 0 0 10px rgba(0,240,255,0.7); box-shadow: 0 -4px 15px rgba(0,240,255,0.25);">
-                  📁 {g_nome}
-              </div>
-              """,
-              unsafe_allow_html=True,
-          )
+          st.markdown(f"**📁 {g_nome}**")
 
           dati_girone = db["punti_gironi"][g_nome]
           sorted_c = sorted(
@@ -1199,13 +1087,9 @@ if db["stato"] == "gironi":
           for idx, (coppia, info) in enumerate(sorted_c):
             gioc, tot = calcola_partite_giocate_coppia(g_nome, coppia)
             fascia_assegnata = "⭐ A" if idx < 4 else "🔻 B"
-            
-            is_la_mia = (coppia == coppia_selezionata)
-            display_coppia = f"👉 {coppia} 👈" if is_la_mia else coppia
-
             data_g.append({
                 "Pos": f"{idx+1}°",
-                "Coppia": display_coppia,
+                "Coppia": coppia,
                 "Pt": info["punti"],
                 "DR": info["dr"],
                 "GF": info["gf"],
@@ -1220,11 +1104,11 @@ if db["stato"] == "gironi":
               pos = int(str(val).replace("°", ""))
               if pos <= 4:
                 return (
-                    "background-color: #062329; color: #00f0ff; font-weight:"
+                    "background-color: #0f2316; color: #3fb950; font-weight:"
                     " bold;"
                 )
               else:
-                return "background-color: #2b1111; color: #ff7b72;"
+                return "background-color: #3d1b1b; color: #ff7b72;"
             except:
               return ""
 
@@ -1238,22 +1122,14 @@ if db["stato"] == "gironi":
 
   st.markdown("---")
 
-  st.markdown(
-      "<h3 style='color: #00f0ff; text-shadow: 0 0 10px"
-      " rgba(0,240,255,0.6);'>📅 Incontri per Girone</h3>",
-      unsafe_allow_html=True,
-  )
+  st.subheader("📅 Incontri per Girone")
   nomi_gironi_lista = list(db["calendario_gironi"].keys())
   if nomi_gironi_lista:
     tabs_gironi = st.tabs(nomi_gironi_lista)
 
     for idx_tab, g_nome in enumerate(nomi_gironi_lista):
       with tabs_gironi[idx_tab]:
-        st.markdown(
-            f"<h4 style='color: #00f0ff; text-shadow: 0 0 8px"
-            f" rgba(0,240,255,0.5);'>Partite - {g_nome}</h4>",
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"### Partite - {g_nome}")
         turni_girone = db["calendario_gironi"][g_nome]
 
         for turno_obj in turni_girone:
@@ -1264,41 +1140,36 @@ if db["stato"] == "gironi":
             match_id = m["id"]
 
             if m["giocata"]:
-              bg_color = "linear-gradient(135deg, #071f11 0%, #030d07 100%)"
+              bg_color = "#0f2316"
               border_color = "#238636"
               stato_testo = (
-                  f"<b style='color: #3fb950; text-shadow: 0 0 6px"
-                  f" rgba(63,185,80,0.6);'>{m['gol1']} - {m['gol2']}</b>"
+                  f"<b style='color: #3fb950;'>{m['gol1']} - {m['gol2']}</b>"
               )
             elif m.get("in_corso", False):
-              bg_color = "linear-gradient(135deg, #261e08 0%, #100c02 100%)"
+              bg_color = "#26210f"
               border_color = "#ffae00"
               stato_testo = (
-                  f"<b style='color: #ffae00; text-shadow: 0 0 6px"
-                  f" rgba(255,174,0,0.6);'>🔥 In corso (Tav."
+                  f"<b style='color: #ffae00;'>🔥 In corso (Tav."
                   f" {m.get('tavolo', 'N/D')})</b>"
               )
             else:
-              bg_color = "#0d1629"
-              border_color = "#00f0ff"
-              stato_testo = (
-                  "<span style='color: #00f0ff; text-shadow: 0 0 6px"
-                  " rgba(0,240,255,0.6);'>VS</span>"
-              )
+              bg_color = "#161b22"
+              border_color = "#30363d"
+              stato_testo = "<span style='color: #8b949e;'>VS</span>"
 
             st.markdown(
                 f"""
-                            <div style="background: {bg_color}; border: 1.5px solid {border_color}; padding: 14px 16px; border-radius: 10px; margin-bottom: 10px; text-align: center; box-shadow: 0 0 10px rgba(0,240,255,0.15);">
-                                <div style="font-weight: bold; color: #ffffff; font-size: 15px; line-height: 1.4;">
+                            <div style="background-color: {bg_color}; border: 1.5px solid {border_color}; padding: 12px 14px; border-radius: 8px; margin-bottom: 8px; text-align: center;">
+                                <div style="font-weight: bold; color: #f0f6fc; font-size: 15px; line-height: 1.4;">
                                     🤝 {m['c1']}
                                 </div>
-                                <div style="margin: 3px 0; font-size: 12px; color: #00f0ff; font-weight: bold; text-shadow: 0 0 6px rgba(0,240,255,0.6);">
+                                <div style="margin: 3px 0; font-size: 12px; color: #8b949e; font-weight: bold;">
                                     VS
                                 </div>
-                                <div style="font-weight: bold; color: #ffffff; font-size: 15px; line-height: 1.4;">
+                                <div style="font-weight: bold; color: #f0f6fc; font-size: 15px; line-height: 1.4;">
                                     {m['c2']} 🤝
                                 </div>
-                                <div style="margin-top: 8px; font-weight: bold; font-size: 14px;">
+                                <div style="margin-top: 6px; font-weight: bold; font-size: 14px;">
                                     {stato_testo}
                                 </div>
                             </div>
@@ -1312,7 +1183,7 @@ if db["stato"] == "gironi":
               ):
                 st.markdown(
                     f"<div style='font-weight: bold; font-size: 15px; color:"
-                    f" #ffffff; margin-bottom: 4px;'>⚽ {m['c1']}</div>",
+                    f" #f0f6fc; margin-bottom: 4px;'>⚽ {m['c1']}</div>",
                     unsafe_allow_html=True,
                 )
                 rg1 = st.pills(
@@ -1325,7 +1196,7 @@ if db["stato"] == "gironi":
 
                 st.markdown(
                     f"<div style='font-weight: bold; font-size: 15px; color:"
-                    f" #ffffff; margin-top: 12px; margin-bottom: 4px;'>⚽ {m['c2']}</div>",
+                    f" #f0f6fc; margin-top: 12px; margin-bottom: 4px;'>⚽ {m['c2']}</div>",
                     unsafe_allow_html=True,
                 )
                 rg2 = st.pills(
@@ -1425,12 +1296,7 @@ if db["stato"] == "gironi":
 
 # 3. FASI FINALI
 elif db["stato"] == "fasi_finali":
-  st.markdown(
-      "<h3 style='color: #00f0ff; text-shadow: 0 0 10px"
-      " rgba(0,240,255,0.6);'>🏆 Fasi Finali: Tabelloni a Eliminazione"
-      " Diretta</h3>",
-      unsafe_allow_html=True,
-  )
+  st.subheader("🏆 Fasi Finali: Tabelloni a Eliminazione Diretta")
 
   tab_a_view, tab_b_view = st.tabs(
       ["⭐ Fascia A (Torneo Principale)", "🔻 Fascia B (Torneo Secondario)"]
@@ -1438,11 +1304,7 @@ elif db["stato"] == "fasi_finali":
 
 
   def gestisci_tabellone(chiave_tabellone, chiave_34, titolo_tab):
-    st.markdown(
-        f"<h4 style='color: #00f0ff; text-shadow: 0 0 8px"
-        f" rgba(0,240,255,0.5);'>📋 {titolo_tab}</h4>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"### 📋 {titolo_tab}")
     turni_tab = db[chiave_tabellone]
 
     mappa_girone_pos = {}
@@ -1475,8 +1337,8 @@ elif db["stato"] == "fasi_finali":
 
       st.markdown(
           f"""
-                <div style="background: linear-gradient(90deg, #052a57 0%, #00f0ff 100%); padding: 12px 18px; border-radius: 10px; margin: 22px 0 14px 0; color: white; text-align: center; box-shadow: 0 0 25px rgba(0,240,255,0.5);">
-                    <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: white; text-shadow: 0 0 10px rgba(0,240,255,0.8);">⚡ {nome_etichetta}</h3>
+                <div style="background: linear-gradient(90deg, #1f6feb 0%, #388bfd 100%); padding: 10px 16px; border-radius: 8px; margin: 20px 0 12px 0; color: white; text-align: center;">
+                    <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: white;">⚡ {nome_etichetta}</h3>
                 </div>
                 """,
           unsafe_allow_html=True,
@@ -1511,31 +1373,31 @@ elif db["stato"] == "fasi_finali":
           continue
 
         if m["giocata"]:
-          box_bg = "linear-gradient(135deg, #071f11 0%, #030d07 100%)"
+          box_bg = "#0f2316"
           border_c = "#238636"
-          centro_testo = f"<span style='font-size: 14px; font-weight: bold; background-color: #238636; color: white; padding: 6px 14px; border-radius: 8px; box-shadow: 0 0 10px rgba(35,134,54,0.6);'>Vince: {m['vincente']}</span>"
+          centro_testo = f"<span style='font-size: 14px; font-weight: bold; background-color: #238636; color: white; padding: 6px 12px; border-radius: 6px;'>Vince: {m['vincente']}</span>"
           vincitori_turno.append(m["vincente"])
           perdente_match = s2_nome if m["vincente"] == s1_nome else s1_nome
           perdenti_turno.append(perdente_match)
         else:
           tutti_giocati = False
-          box_bg = "#0d1629"
-          border_c = "#00f0ff"
-          centro_testo = "<span style='font-size: 14px; font-weight: bold; background-color: #071a36; color: #00f0ff; padding: 6px 12px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,240,255,0.4);'>VS</span>"
+          box_bg = "#161b22"
+          border_c = "#30363d"
+          centro_testo = "<span style='font-size: 14px; font-weight: bold; background-color: #21262d; color: #8b949e; padding: 6px 10px; border-radius: 6px;'>VS</span>"
 
         st.markdown(
             f"""
-                    <div style="background: {box_bg}; border: 2px solid {border_c}; padding: 18px 22px; border-radius: 14px; margin-bottom: 12px; text-align: center; box-shadow: 0 0 15px rgba(0,240,255,0.2);">
-                        <div style="font-size: 17px; font-weight: bold; color: #ffffff; line-height: 1.4;">
-                            🤝 {s1_nome} <span style="font-size: 12px; color: #00f0ff; font-weight: normal; display: block; text-shadow: 0 0 6px rgba(0,240,255,0.5);">({s1_sottotitolo})</span>
+                    <div style="background-color: {box_bg}; border: 2px solid {border_c}; padding: 16px 20px; border-radius: 12px; margin-bottom: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">
+                        <div style="font-size: 16px; font-weight: bold; color: #f0f6fc; line-height: 1.4;">
+                            🤝 {s1_nome} <span style="font-size: 12px; color: #8b949e; font-weight: normal; display: block;">({s1_sottotitolo})</span>
                         </div>
-                        <div style="margin: 6px 0; font-size: 13px; font-weight: bold; color: #00f0ff; text-shadow: 0 0 6px rgba(0,240,255,0.6);">
+                        <div style="margin: 6px 0; font-size: 13px; font-weight: bold; color: #8b949e;">
                             VS
                         </div>
-                        <div style="font-size: 17px; font-weight: bold; color: #ffffff; line-height: 1.4;">
-                            🤝 {s2_nome} <span style="font-size: 12px; color: #00f0ff; font-weight: normal; display: block; text-shadow: 0 0 6px rgba(0,240,255,0.5);">({s2_sottotitolo})</span>
+                        <div style="font-size: 16px; font-weight: bold; color: #f0f6fc; line-height: 1.4;">
+                            🤝 {s2_nome} <span style="font-size: 12px; color: #8b949e; font-weight: normal; display: block;">({s2_sottotitolo})</span>
                         </div>
-                        <div style="margin-top: 12px;">
+                        <div style="margin-top: 10px;">
                             {centro_testo}
                         </div>
                     </div>
@@ -1650,7 +1512,7 @@ elif db["stato"] == "fasi_finali":
     if db[chiave_34]:
       st.markdown(
           """
-                <div style="background: linear-gradient(90deg, #bb8009 0%, #d4a72c 100%); padding: 12px 18px; border-radius: 10px; margin: 25px 0 14px 0; color: white; text-align: center; box-shadow: 0 0 20px rgba(212,167,44,0.4);">
+                <div style="background: linear-gradient(90deg, #bb8009 0%, #d4a72c 100%); padding: 10px 16px; border-radius: 8px; margin: 25px 0 12px 0; color: white; text-align: center;">
                     <h3 style="margin: 0; font-size: 18px; font-weight: bold; color: white;">🥉 FINALE 3° / 4° POSTO</h3>
                 </div>
                 """,
@@ -1666,9 +1528,9 @@ elif db["stato"] == "fasi_finali":
       tq_s2_sub = f"{tq_p2}° del {tq_g2}" if tq_g2 and tq_p2 else ""
 
       if tq_match["giocata"]:
-        tq_bg = "linear-gradient(135deg, #261e08 0%, #100c02 100%)"
+        tq_bg = "#26210f"
         tq_border = "#bb8009"
-        tq_centro = f"<span style='font-size: 14px; font-weight: bold; background-color: #bb8009; color: white; padding: 6px 14px; border-radius: 8px;'>3° Posto: {tq_match['vincente']}</span>"
+        tq_centro = f"<span style='font-size: 14px; font-weight: bold; background-color: #bb8009; color: white; padding: 6px 12px; border-radius: 6px;'>3° Posto: {tq_match['vincente']}</span>"
         terzo_posto = tq_match["vincente"]
         quarto_posto = (
             tq_match["s2"]
@@ -1676,23 +1538,23 @@ elif db["stato"] == "fasi_finali":
             else tq_match["s1"]
         )
       else:
-        tq_bg = "#0d1629"
-        tq_border = "#00f0ff"
-        tq_centro = "<span style='font-size: 14px; font-weight: bold; background-color: #071a36; color: #00f0ff; padding: 6px 12px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,240,255,0.4);'>VS</span>"
+        tq_bg = "#161b22"
+        tq_border = "#30363d"
+        tq_centro = "<span style='font-size: 14px; font-weight: bold; background-color: #21262d; color: #8b949e; padding: 6px 10px; border-radius: 6px;'>VS</span>"
 
       st.markdown(
           f"""
-                <div style="background: {tq_bg}; border: 2px solid {tq_border}; padding: 18px 22px; border-radius: 14px; margin-bottom: 12px; text-align: center; box-shadow: 0 0 15px rgba(0,240,255,0.2);">
-                    <div style="font-size: 17px; font-weight: bold; color: #ffffff; line-height: 1.4;">
-                        🤝 {tq_match['s1']} <span style="font-size: 12px; color: #00f0ff; font-weight: normal; display: block; text-shadow: 0 0 6px rgba(0,240,255,0.5);">({tq_s1_sub})</span>
+                <div style="background-color: {tq_bg}; border: 2px solid {tq_border}; padding: 16px 20px; border-radius: 12px; margin-bottom: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.4);">
+                    <div style="font-size: 16px; font-weight: bold; color: #f0f6fc; line-height: 1.4;">
+                        🤝 {tq_match['s1']} <span style="font-size: 12px; color: #8b949e; font-weight: normal; display: block;">({tq_s1_sub})</span>
                     </div>
-                    <div style="margin: 6px 0; font-size: 13px; font-weight: bold; color: #00f0ff; text-shadow: 0 0 6px rgba(0,240,255,0.6);">
+                    <div style="margin: 6px 0; font-size: 13px; font-weight: bold; color: #8b949e;">
                         VS
                     </div>
-                    <div style="font-size: 17px; font-weight: bold; color: #ffffff; line-height: 1.4;">
-                        🤝 {tq_match['s2']} <span style="font-size: 12px; color: #00f0ff; font-weight: normal; display: block; text-shadow: 0 0 6px rgba(0,240,255,0.5);">({tq_s2_sub})</span>
+                    <div style="font-size: 16px; font-weight: bold; color: #f0f6fc; line-height: 1.4;">
+                        🤝 {tq_match['s2']} <span style="font-size: 12px; color: #8b949e; font-weight: normal; display: block;">({tq_s2_sub})</span>
                     </div>
-                    <div style="margin-top: 12px;">
+                    <div style="margin-top: 10px;">
                         {tq_centro}
                     </div>
                 </div>
@@ -1730,12 +1592,12 @@ elif db["stato"] == "fasi_finali":
       st.markdown("---")
       st.markdown(
           f"""
-                <div style="background: linear-gradient(135deg, #081b33 0%, #030712 100%); border: 3px solid #00f0ff; padding: 30px; border-radius: 18px; text-align: center; color: #ffffff; margin-top: 25px; box-shadow: 0 0 35px rgba(0,240,255,0.5);">
-                    <h2 style="margin: 0 0 15px 0; color: #00f0ff; font-size: 26px; text-shadow: 0 0 20px rgba(0,240,255,0.9);">🏆 PODIO FINALE - {titolo_tab} 🏆</h2>
-                    <p style="font-size: 23px; margin: 12px 0; font-weight: bold; color: #f1e05a; text-shadow: 0 0 10px rgba(241,224,90,0.6);">🥇 1° POSTO (Campioni): {campione}</p>
-                    <p style="font-size: 20px; margin: 10px 0; font-weight: 600; color: #e2e8f0;">🥈 2° POSTO: {secondo_posto if secondo_posto else 'N.D.'}</p>
-                    <p style="font-size: 20px; margin: 10px 0; font-weight: 600; color: #00f0ff; text-shadow: 0 0 8px rgba(0,240,255,0.6);">🥉 3° POSTO: {terzo_posto if terzo_posto else 'N.D.'}</p>
-                    <p style="font-size: 16px; margin: 12px 0; color: #93c5fd;">4° Posto: {quarto_posto if quarto_posto else 'N.D.'}</p>
+                <div style="background: linear-gradient(135deg, #26210f 0%, #1f1a05 100%); border: 3px solid #bb8009; padding: 25px; border-radius: 16px; text-align: center; color: #f0f6fc; margin-top: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">
+                    <h2 style="margin: 0 0 15px 0; color: #f1e05a; font-size: 24px;">🏆 PODIO FINALE - {titolo_tab} 🏆</h2>
+                    <p style="font-size: 22px; margin: 10px 0; font-weight: bold; color: #f1e05a;">🥇 1° POSTO (Campioni): {campione}</p>
+                    <p style="font-size: 19px; margin: 8px 0; font-weight: 600; color: #c9d1d9;">🥈 2° POSTO: {secondo_posto if secondo_posto else 'N.D.'}</p>
+                    <p style="font-size: 19px; margin: 8px 0; font-weight: 600; color: #d2a8ff;">🥉 3° POSTO: {terzo_posto if terzo_posto else 'N.D.'}</p>
+                    <p style="font-size: 16px; margin: 10px 0; color: #8b949e;">4° Posto: {quarto_posto if quarto_posto else 'N.D.'}</p>
                 </div>
                 """,
           unsafe_allow_html=True,
@@ -1755,3 +1617,10 @@ elif db["stato"] == "fasi_finali":
         "terzo_quarto_b",
         "Tabellone Eliminazione Diretta - Fascia B",
     )
+
+
+
+
+
+
+ Mi puoi estrapolare tutto il sistema del torneo che abbiamo fatto qua?
