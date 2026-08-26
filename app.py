@@ -1623,4 +1623,4 @@ elif db["stato"] == "fasi_finali":
 
 
 
- Mi puoi estrapolare tutto il sistema del torneo che abbiamo fatto qua?
+ Mi 
