@@ -1,3 +1,4 @@
-
-fpdf
+streamlit
 streamlit-autorefresh
+fpdf2
+pandas
