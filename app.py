@@ -23,9 +23,6 @@ st.markdown(
 
         .stApp {
             background-color: #05070f;
-            background-image: 
-                radial-gradient(circle at 50% 10%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
-                radial-gradient(circle at 10% 90%, rgba(255, 0, 127, 0.06) 0%, transparent 50%);
             color: #f0f6fc;
             font-family: 'Inter', sans-serif;
             color-scheme: dark !important;
@@ -120,13 +117,17 @@ def carica_dati():
             dati_salvati[k] = v
         return dati_salvati
     except:
-      pass
+      # Se il file è corrotto, lo elimina per evitare crash
+      os.remove(DB_FILE)
   return dati_default
 
 
 def salva_dati(data):
-  with open(DB_FILE, "w") as f:
-    json.dump(data, f, indent=4)
+  try:
+    with open(DB_FILE, "w") as f:
+      json.dump(data, f, indent=4)
+  except:
+    pass
 
 
 if "db" not in st.session_state:
@@ -151,7 +152,7 @@ def ricalcola_classifiche_gironi():
             "gf": 0,
             "gs": 0,
             "dr": 0,
-            "scontri_diretti_pt": {},
+            "scontri_diretti_pt": 0,
         }
         for c in coppie_lista
     }
@@ -162,34 +163,37 @@ def ricalcola_classifiche_gironi():
             c1, c2 = m["c1"], m["c2"]
             g1, g2 = m["gol1"], m["gol2"]
             diff = abs(g1 - g2)
-            stats[c1]["partite_giocate"] += 1
-            stats[c2]["partite_giocate"] += 1
-            if g1 > g2:
-              pt_s1, pt_s2 = (3, 0) if diff >= 2 else (2, 1)
-              stats[c1]["vinte"] += 1
-              stats[c2]["perse"] += 1
-            elif g2 > g1:
-              pt_s1, pt_s2 = (0, 3) if diff >= 2 else (1, 2)
-              stats[c2]["vinte"] += 1
-              stats[c1]["perse"] += 1
-            else:
-              pt_s1, pt_s2 = 2, 2
-            stats[c1]["punti"] += pt_s1
-            stats[c2]["punti"] += pt_s2
-            stats[c1]["gf"] += g1
-            stats[c1]["gs"] += g2
-            stats[c2]["gf"] += g2
-            stats[c2]["gs"] += g1
+            if c1 in stats and c2 in stats:
+              stats[c1]["partite_giocate"] += 1
+              stats[c2]["partite_giocate"] += 1
+              if g1 > g2:
+                pt_s1, pt_s2 = (3, 0) if diff >= 2 else (2, 1)
+                stats[c1]["vinte"] += 1
+                stats[c2]["perse"] += 1
+              elif g2 > g1:
+                pt_s1, pt_s2 = (0, 3) if diff >= 2 else (1, 2)
+                stats[c2]["vinte"] += 1
+                stats[c1]["perse"] += 1
+              else:
+                pt_s1, pt_s2 = 2, 2
+              stats[c1]["punti"] += pt_s1
+              stats[c2]["punti"] += pt_s2
+              stats[c1]["gf"] += g1
+              stats[c1]["gs"] += g2
+              stats[c2]["gf"] += g2
+              stats[c2]["gs"] += g1
 
       for c in coppie_lista:
-        stats[c]["dr"] = stats[c]["gf"] - stats[c]["gs"]
+        if c in stats:
+          stats[c]["dr"] = stats[c]["gf"] - stats[c]["gs"]
 
       punti_gruppo = {}
       for c in coppie_lista:
-        p = stats[c]["punti"]
-        if p not in punti_gruppo:
-          punti_gruppo[p] = []
-        punti_gruppo[p].append(c)
+        if c in stats:
+          p = stats[c]["punti"]
+          if p not in punti_gruppo:
+            punti_gruppo[p] = []
+          punti_gruppo[p].append(c)
 
       for p, gruppo in punti_gruppo.items():
         if len(gruppo) > 1:
@@ -209,29 +213,7 @@ def ricalcola_classifiche_gironi():
                     mini_punti[c2] += 1
           for c in gruppo:
             stats[c]["scontri_diretti_pt"] = mini_punti[c]
-        else:
-          for c in gruppo:
-            stats[c]["scontri_diretti_pt"] = 0
     db["punti_gironi"][g_nome] = stats
-
-
-def selettore_gol_bottoni(prefix, default_val=0):
-  if prefix not in st.session_state:
-    st.session_state[prefix] = int(default_val)
-  val_corrente = st.session_state[prefix]
-  st.markdown(
-      f"<div style='font-size: 13px; color: #8b949e; margin-bottom: 4px;'>Gol: <b class='neon-blue'>{val_corrente}</b></div>",
-      unsafe_allow_html=True,
-  )
-  cols = st.columns(8)
-  for g in range(8):
-    with cols[g]:
-      if st.button(
-          str(g), key=f"btn_gol_{prefix}_{g}", use_container_width=True
-      ):
-        st.session_state[prefix] = g
-        st.rerun()
-  return st.session_state[prefix]
 
 
 # --- BARRA LATERALE ---
@@ -326,122 +308,6 @@ if not is_admin and coppia_selezionata == "-- Seleziona la tua coppia per accede
       unsafe_allow_html=True,
   )
   st.stop()
-
-if is_admin or coppia_selezionata != "-- Seleziona la tua coppia per accedere --":
-  target_coppia = (
-      tutte_le_coppie[0]
-      if (is_admin and coppia_selezionata == "-- Seleziona la tua coppia per accedere --")
-      else coppia_selezionata
-  )
-
-  with st.expander(f"👁️ Stato Squadra: {target_coppia}", expanded=True):
-    girone_mio, pos_mia, info_mie = None, None, None
-    for g_nome, lista_c in db["gironi"].items():
-      if target_coppia in lista_c:
-        girone_mio = g_nome
-        ricalcola_classifiche_gironi()
-        if g_nome in db["punti_gironi"]:
-          dati_g = db["punti_gironi"][g_nome]
-          sorted_c = sorted(
-              dati_g.items(),
-              key=lambda x: (
-                  x[1]["punti"],
-                  x[1]["scontri_diretti_pt"],
-                  x[1]["dr"],
-                  x[1]["gf"],
-              ),
-              reverse=True,
-          )
-          for idx, (c_nome, stats) in enumerate(sorted_c):
-            if c_nome == target_coppia:
-              pos_mia = idx + 1
-              info_mie = stats
-        break
-
-    match_in_corso_coppia = None
-    if db["stato"] == "gironi":
-      max_turni = (
-          max([len(turni) for turni in db["calendario_gironi"].values()])
-          if db["calendario_gironi"]
-          else 0
-      )
-      for t_num in range(1, max_turni + 1):
-        for g_n, turni_girone in db["calendario_gironi"].items():
-          for t_obj in turni_girone:
-            if t_obj["turno"] == t_num:
-              for m in t_obj["partite"]:
-                if (
-                    not m.get("giocata", False)
-                    and (m["c1"] == target_coppia or m["c2"] == target_coppia)
-                    and m.get("in_corso", False)
-                ):
-                  match_in_corso_coppia = m
-
-    st.markdown(
-        f"""
-        <div class="neon-box-main">
-            <div style="font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 10px;">🤝 {target_coppia}</div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <div style="background: rgba(8, 12, 20, 0.85); border: 1px solid #00f2fe; border-radius: 10px; padding: 10px; flex: 1; text-align: center;">
-                    <span style="font-size: 10px; color: #8b949e;">GIRONE</span><br><b class="neon-blue">{girone_mio or 'N.D.'}</b>
-                </div>
-                <div style="background: rgba(8, 12, 20, 0.85); border: 1px solid #00ff66; border-radius: 10px; padding: 10px; flex: 1; text-align: center;">
-                    <span style="font-size: 10px; color: #8b949e;">POSIZIONE</span><br><b class="neon-green">{str(pos_mia) + '°' if pos_mia else 'N.D.'}</b>
-                </div>
-                <div style="background: rgba(8, 12, 20, 0.85); border: 1px solid #ffaa00; border-radius: 10px; padding: 10px; flex: 1; text-align: center;">
-                    <span style="font-size: 10px; color: #8b949e;">PUNTI</span><br><b class="neon-gold">{info_mie['punti'] if info_mie else 0} pt</b>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if match_in_corso_coppia:
-      avversario = (
-          match_in_corso_coppia["c2"]
-          if match_in_corso_coppia["c1"] == target_coppia
-          else match_in_corso_coppia["c1"]
-      )
-      match_id = match_in_corso_coppia["id"]
-      st.markdown(
-          f"""
-            <div style="background: rgba(30, 20, 10, 0.95); border: 2px solid #ffaa00; border-radius: 12px; padding: 14px; text-align: center; margin-bottom: 15px;">
-                <b class="neon-gold">🔴 PARTITA ATTIVA AL TAVOLO {match_in_corso_coppia.get('tavolo')}!</b><br>Contro: <b>{avversario}</b>
-            </div>
-            """,
-          unsafe_allow_html=True,
-      )
-
-      col_ins1, col_ins2 = st.columns(2)
-      with col_ins1:
-        st.markdown(f"**Gol {match_in_corso_coppia['c1']}**")
-        gp1 = selettore_gol_bottoni(
-            f"ur_g1_{match_id}", int(match_in_corso_coppia.get("gol1", 0))
-        )
-      with col_ins2:
-        st.markdown(f"**Gol {match_in_corso_coppia['c2']}**")
-        gp2 = selettore_gol_bottoni(
-            f"ur_g2_{match_id}", int(match_in_corso_coppia.get("gol2", 0))
-        )
-
-      if st.button("✅ Salva Risultato", key=f"s_save_{match_id}", use_container_width=True):
-        match_in_corso_coppia["gol1"] = int(gp1)
-        match_in_corso_coppia["gol2"] = int(gp2)
-        match_in_corso_coppia["giocata"] = True
-        match_in_corso_coppia["in_corso"] = False
-        match_in_corso_coppia["tavolo"] = None
-        ricalcola_classifiche_gironi()
-        salva_dati(db)
-        st.success("Salvato!")
-        st.rerun()
-
-      if st.button("⏳ Rimanda Partita", key=f"rimanda_{match_id}", use_container_width=True):
-        match_in_corso_coppia["in_corso"] = False
-        match_in_corso_coppia["tavolo"] = None
-        salva_dati(db)
-        st.warning("Partita rimandata in coda!")
-        st.rerun()
 
 # SETUP INIZIALE
 if db["stato"] == "setup" or st.session_state.get("mostra_setup", False):
@@ -588,8 +454,24 @@ if db["stato"] == "gironi":
         )
         if is_admin or coppia_selezionata in [m["c1"], m["c2"]]:
           with st.expander(f"📝 Gestisci Tavolo {m.get('tavolo')}"):
-            g1 = selettore_gol_bottoni(f"l_g1_{m['id']}", m.get("gol1", 0))
-            g2 = selettore_gol_bottoni(f"l_g2_{m['id']}", m.get("gol2", 0))
+            col_g1, col_g2 = st.columns(2)
+            with col_g1:
+              g1 = st.number_input(
+                  f"Gol {m['c1']}",
+                  0,
+                  20,
+                  int(m.get("gol1", 0)),
+                  key=f"g1_{m['id']}",
+              )
+            with col_g2:
+              g2 = st.number_input(
+                  f"Gol {m['c2']}",
+                  0,
+                  20,
+                  int(m.get("gol2", 0)),
+                  key=f"g2_{m['id']}",
+              )
+
             if st.button("✅ Salva Risultato", key=f"sv_{m['id']}", use_container_width=True):
               m["gol1"] = int(g1)
               m["gol2"] = int(g2)
