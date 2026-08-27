@@ -8,14 +8,14 @@ import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-# Aggiornamento ultra-rapido (2 secondi) per rendere la classifica e le code fluidissime
-st_autorefresh(interval=2000, debounce=False, key="auto_refresh_coppie")
+# Aggiornamento impostato a 4 secondi per la massima stabilità ed evitare errori di rendering
+st_autorefresh(interval=4000, debounce=False, key="auto_refresh_coppie")
 
 st.set_page_config(
     page_title="Torneo Coppie Fisse Live - Cyber Gaming Edition",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="collapsed",  # <-- Sidebar chiusa all'avvio come richiesto!
+    initial_sidebar_state="collapsed",  # Sidebar chiusa all'avvio
 )
 
 # --- STILE GRAFICO GLOBALE: CYBERPUNK & NEON ARCADE ESPORTS ---
@@ -546,11 +546,9 @@ if is_admin or coppia_selezionata != "-- Seleziona la tua coppia per accedere --
         st.success("Salvato!")
         st.rerun()
 
-      # PULSANTE RIMANDA PARTITA RICHIESTO DALL'UTENTE
       if st.button("⏳ Non possiamo giocare ora: Rimanda Partita", key=f"rimanda_{match_id}", use_container_width=True):
         match_in_corso_coppia["in_corso"] = False
         match_in_corso_coppia["tavolo"] = None
-        # La spostiamo in fondo alla coda rimettendola tra i match non giocati
         salva_dati(db)
         st.warning("Partita rimandata in coda!")
         st.rerun()
@@ -665,7 +663,6 @@ if db["stato"] == "gironi":
       else:
         partite_da_giocare.append(m)
 
-  # Assegnazione automatica tavoli liberi
   tavoli_occupati = [p.get("tavolo") for p in partite_in_corso if p.get("tavolo")]
   tavoli_liberi = [t for t in range(1, num_tavoli + 1) if t not in tavoli_occupati]
 
