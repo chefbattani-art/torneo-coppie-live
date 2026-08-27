@@ -6,16 +6,12 @@ import re
 from fpdf import FPDF
 import pandas as pd
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
-
-# Aggiornamento impostato a 4 secondi per la massima stabilità ed evitare errori di rendering
-st_autorefresh(interval=4000, debounce=False, key="auto_refresh_coppie")
 
 st.set_page_config(
     page_title="Torneo Coppie Fisse Live - Cyber Gaming Edition",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="collapsed",  # Sidebar chiusa all'avvio
+    initial_sidebar_state="collapsed",
 )
 
 # --- STILE GRAFICO GLOBALE: CYBERPUNK & NEON ARCADE ESPORTS ---
@@ -337,6 +333,13 @@ def selettore_gol_bottoni(prefix, default_val=0):
 
 # --- BARRA LATERALE ---
 st.sidebar.header("⚙️ Pannello Controllo")
+
+# Pulsante manuale per aggiornare la pagina in modo sicuro
+if st.sidebar.button("🔄 Aggiorna Pagina", use_container_width=True):
+  st.rerun()
+
+st.sidebar.markdown("---")
+
 if db["stato"] != "setup":
   pdf_data = genera_pdf_coppie()
   st.sidebar.download_button(
