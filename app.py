@@ -3,7 +3,6 @@ import json
 import os
 import random
 import re
-from fpdf import FPDF
 import pandas as pd
 import streamlit as st
 
@@ -14,24 +13,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# --- STILE GRAFICO GLOBALE: CYBERPUNK & NEON ARCADE ESPORTS ---
+# --- STILE GRAFICO GLOBALE ---
 st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@600;800;900&family=Inter:wght@400;600;800&display=swap');
 
-        :root {
-            color-scheme: dark !important;
-        }
+        :root { color-scheme: dark !important; }
 
         .stApp {
             background-color: #05070f;
             background-image: 
                 radial-gradient(circle at 50% 10%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
-                radial-gradient(circle at 10% 90%, rgba(255, 0, 127, 0.06) 0%, transparent 50%),
-                linear-gradient(to right, rgba(0, 242, 254, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+                radial-gradient(circle at 10% 90%, rgba(255, 0, 127, 0.06) 0%, transparent 50%);
             color: #f0f6fc;
             font-family: 'Inter', sans-serif;
             color-scheme: dark !important;
@@ -40,36 +34,18 @@ st.markdown(
         section[data-testid="stSidebar"] {
             background: linear-gradient(180deg, #070a17, #020408);
             border-right: 2px solid rgba(0, 242, 254, 0.2);
-            box-shadow: 8px 0 30px rgba(0, 242, 254, 0.08);
         }
 
-        div[data-baseweb="select"] > div {
-            background-color: #161f30 !important;
-            color: white !important;
-            border-color: #00f2fe !important;
-        }
-        div[data-baseweb="select"] span {
-            color: white !important;
-        }
-        div[data-baseweb="popover"] div {
-            background-color: #161f30 !important;
-            color: white !important;
-        }
-        ul[data-baseweb="menu"] {
-            background-color: #161f30 !important;
-        }
-        li[data-baseweb="option"] {
-            background-color: #161f30 !important;
-            color: white !important;
-        }
-        li[data-baseweb="option"]:hover {
-            background-color: #1d3557 !important;
-            color: #00f2fe !important;
-        }
+        div[data-baseweb="select"] > div { background-color: #161f30 !important; color: white !important; border-color: #00f2fe !important; }
+        div[data-baseweb="select"] span { color: white !important; }
+        div[data-baseweb="popover"] div { background-color: #161f30 !important; color: white !important; }
+        ul[data-baseweb="menu"] { background-color: #161f30 !important; }
+        li[data-baseweb="option"] { background-color: #161f30 !important; color: white !important; }
+        li[data-baseweb="option"]:hover { background-color: #1d3557 !important; color: #00f2fe !important; }
 
         .neon-title-box {
             border: 2px solid #00f2fe;
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.4), inset 0 0 15px rgba(0, 242, 254, 0.1);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.4);
             border-radius: 18px;
             padding: 24px;
             text-align: center;
@@ -81,48 +57,30 @@ st.markdown(
             font-family: 'Rajdhani', sans-serif !important;
             font-size: 34px;
             font-weight: 900;
-            text-shadow: 0 0 15px rgba(0,255,102,0.9), 0 0 30px rgba(0,255,102,0.5);
+            text-shadow: 0 0 15px rgba(0,255,102,0.9);
             margin: 0;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
-        .neon-subtitle {
-            color: #8b949e;
-            font-size: 14px;
-            margin-top: 6px;
-            font-weight: 600;
-        }
-
+        .neon-subtitle { color: #8b949e; font-size: 14px; margin-top: 6px; font-weight: 600; }
         .neon-box-main {
             background: linear-gradient(135deg, rgba(16, 22, 36, 0.95) 0%, rgba(8, 12, 20, 0.98) 100%);
             border: 2px solid #00f2fe;
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.25), inset 0 0 15px rgba(0, 242, 254, 0.08);
         }
-
         .match-live-card {
             background: linear-gradient(135deg, rgba(30, 20, 10, 0.95) 0%, rgba(12, 8, 4, 0.98) 100%);
             border: 2px solid #ffaa00;
             border-radius: 16px;
             padding: 22px;
             text-align: center;
-            box-shadow: 0 0 30px rgba(255, 170, 0, 0.35), inset 0 0 15px rgba(255, 170, 0, 0.1);
         }
-
-        .neon-gold { color: #ffaa00 !important; text-shadow: 0 0 12px rgba(255,170,0,0.8); }
-        .neon-blue { color: #00f2fe !important; text-shadow: 0 0 12px rgba(0,242,254,0.8); }
-        .neon-purple { color: #d946ef !important; text-shadow: 0 0 12px rgba(217,70,239,0.8); }
-        .neon-green { color: #00ff66 !important; text-shadow: 0 0 12px rgba(0,255,102,0.8); }
-        .neon-silver { color: #e2e8f0 !important; text-shadow: 0 0 12px rgba(226,232,240,0.7); }
-
-        h1, h2, h3, h4 {
-            font-family: 'Rajdhani', sans-serif !important;
-            color: #ffffff !important;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
+        .neon-gold { color: #ffaa00 !important; }
+        .neon-blue { color: #00f2fe !important; }
+        .neon-green { color: #00ff66 !important; }
+        h1, h2, h3, h4 { font-family: 'Rajdhani', sans-serif !important; color: #ffffff !important; letter-spacing: 1.5px; text-transform: uppercase; }
 
         div.stButton > button {
             border-radius: 12px;
@@ -130,19 +88,9 @@ st.markdown(
             font-family: 'Rajdhani', sans-serif;
             font-size: 18px;
             height: 50px !important;
-            letter-spacing: 1px;
             border: 1.5px solid rgba(0, 242, 254, 0.5);
             background: linear-gradient(180deg, #132238, #0a111c);
             color: #00f2fe;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
-            transition: all 0.2s ease;
-        }
-        div.stButton > button:hover {
-            border-color: #00f2fe;
-            background: linear-gradient(180deg, #1d3557, #0f2038);
-            color: #ffffff;
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.8);
-            transform: translateY(-2px);
         }
     </style>
     """,
@@ -162,12 +110,6 @@ def carica_dati():
       "gironi": {},
       "calendario_gironi": {},
       "punti_gironi": {},
-      "fasi_finali_configurate": False,
-      "num_qualificate_knockout": 4,
-      "tabellone_a": [],
-      "tabellone_b": [],
-      "terzo_quarto_a": [],
-      "terzo_quarto_b": [],
   }
   if os.path.exists(DB_FILE):
     try:
@@ -189,7 +131,6 @@ def salva_dati(data):
 
 if "db" not in st.session_state:
   st.session_state.db = carica_dati()
-
 db = st.session_state.db
 
 
@@ -214,7 +155,6 @@ def ricalcola_classifiche_gironi():
         }
         for c in coppie_lista
     }
-
     if g_nome in db["calendario_gironi"]:
       for turno_obj in db["calendario_gironi"][g_nome]:
         for m in turno_obj["partite"]:
@@ -222,10 +162,8 @@ def ricalcola_classifiche_gironi():
             c1, c2 = m["c1"], m["c2"]
             g1, g2 = m["gol1"], m["gol2"]
             diff = abs(g1 - g2)
-
             stats[c1]["partite_giocate"] += 1
             stats[c2]["partite_giocate"] += 1
-
             if g1 > g2:
               pt_s1, pt_s2 = (3, 0) if diff >= 2 else (2, 1)
               stats[c1]["vinte"] += 1
@@ -236,7 +174,6 @@ def ricalcola_classifiche_gironi():
               stats[c1]["perse"] += 1
             else:
               pt_s1, pt_s2 = 2, 2
-
             stats[c1]["punti"] += pt_s1
             stats[c2]["punti"] += pt_s2
             stats[c1]["gf"] += g1
@@ -275,41 +212,7 @@ def ricalcola_classifiche_gironi():
         else:
           for c in gruppo:
             stats[c]["scontri_diretti_pt"] = 0
-
     db["punti_gironi"][g_nome] = stats
-
-
-def genera_pdf_coppie():
-  pdf = FPDF()
-  pdf.add_page()
-  pdf.set_font("Arial", "B", 16)
-  pdf.cell(0, 10, "Torneo a Coppie Fisse - Schema Gironi", 0, 1, "C")
-  pdf.ln(5)
-
-  for g_nome, turni in db["calendario_gironi"].items():
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, f"--- {g_nome} ---", 0, 1, "L")
-    for turno_obj in turni:
-      pdf.set_font("Arial", "B", 11)
-      pdf.cell(0, 7, f"Turno {turno_obj['turno']}", 0, 1, "L")
-      pdf.set_font("Arial", "", 10)
-      for idx, m in enumerate(turno_obj["partite"]):
-        risultato = (
-            f"{m['gol1']} - {m['gol2']}"
-            if m.get("giocata", False)
-            else "Da giocare"
-        )
-        riga = f"  {m['c1']} VS {m['c2']} -> {risultato}"
-        pdf.cell(
-            0,
-            6,
-            riga.encode("latin-1", "ignore").decode("latin-1"),
-            0,
-            1,
-            "L",
-        )
-      pdf.ln(2)
-  return bytes(pdf.output())
 
 
 def selettore_gol_bottoni(prefix, default_val=0):
@@ -333,24 +236,10 @@ def selettore_gol_bottoni(prefix, default_val=0):
 
 # --- BARRA LATERALE ---
 st.sidebar.header("⚙️ Pannello Controllo")
-
-# Pulsante manuale per aggiornare la pagina in modo sicuro
 if st.sidebar.button("🔄 Aggiorna Pagina", use_container_width=True):
   st.rerun()
 
 st.sidebar.markdown("---")
-
-if db["stato"] != "setup":
-  pdf_data = genera_pdf_coppie()
-  st.sidebar.download_button(
-      label="📥 Scarica Schema PDF",
-      data=pdf_data,
-      file_name="schema_gironi_torneo.pdf",
-      mime="application/pdf",
-      use_container_width=True,
-  )
-  st.sidebar.markdown("---")
-
 modalita_admin = st.sidebar.checkbox("Modalità Amministratore (PIN)")
 is_admin = False
 if modalita_admin:
@@ -401,7 +290,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# SELETTORE COPPIA IN EVIDENZA IN ALTO
 tutte_le_coppie = []
 for g_lst in db["gironi"].values():
   tutte_le_coppie.extend(g_lst)
@@ -439,7 +327,6 @@ if not is_admin and coppia_selezionata == "-- Seleziona la tua coppia per accede
   )
   st.stop()
 
-# DASHBOARD PERSONALE UTENTE / ADMIN
 if is_admin or coppia_selezionata != "-- Seleziona la tua coppia per accedere --":
   target_coppia = (
       tutte_le_coppie[0]
@@ -549,7 +436,7 @@ if is_admin or coppia_selezionata != "-- Seleziona la tua coppia per accedere --
         st.success("Salvato!")
         st.rerun()
 
-      if st.button("⏳ Non possiamo giocare ora: Rimanda Partita", key=f"rimanda_{match_id}", use_container_width=True):
+      if st.button("⏳ Rimanda Partita", key=f"rimanda_{match_id}", use_container_width=True):
         match_in_corso_coppia["in_corso"] = False
         match_in_corso_coppia["tavolo"] = None
         salva_dati(db)
@@ -713,7 +600,7 @@ if db["stato"] == "gironi":
               salva_dati(db)
               st.rerun()
 
-            if st.button("⏳ Rimanda Partita in Coda", key=f"rim_{m['id']}", use_container_width=True):
+            if st.button("⏳ Rimanda in Coda", key=f"rim_{m['id']}", use_container_width=True):
               m["in_corso"] = False
               m["tavolo"] = None
               salva_dati(db)
@@ -746,10 +633,3 @@ if db["stato"] == "gironi":
           f"<div style='background: rgba(16,22,36,0.9); border: 1px solid #00f2fe; padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between;'><b>{idx+1}° {c}</b> <span><b>{info['punti']} pt</b> (V:{info['vinte']} P:{info['perse']} DR:{info['dr']:+d})</span></div>",
           unsafe_allow_html=True,
       )
-
-  if is_admin:
-    st.markdown("---")
-    if st.button("🏆 Genera Fasi Finali", use_container_width=True):
-      db["stato"] = "fasi_finali"
-      salva_dati(db)
-      st.rerun()
