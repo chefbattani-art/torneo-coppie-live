@@ -7,7 +7,6 @@ import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-# Aggiornato a 3 secondi per una fluidità e reattività elevata con tanti utenti
 st_autorefresh(interval=3000, debounce=False, key="auto_refresh_coppie")
 st.set_page_config(
     page_title="Torneo Coppie Fisse Live",
@@ -16,13 +15,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- STILE GLOBALE (TEMA SPIAGGIA / SUMMER SUNSET) ---
+# --- STILE GLOBALE OTTIMIZZATO PER LA LEGGIBILITÀ ---
 st.markdown(
     """
     <style>
         .stApp {
             background: linear-gradient(180deg, #0284c7 0%, #38bdf8 30%, #fef08a 70%, #fdba74 100%);
-            color: #1e293b;
+            color: #0f172a;
             font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
         }
         section[data-testid="stSidebar"] {
@@ -33,8 +32,32 @@ st.markdown(
         section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] .stMarkdown {
             color: #ffffff !important;
         }
+        
+        /* CORREZIONE CAMPI DI TESTO E TEXT AREA PER MASSIMA LEGGIBILITÀ */
+        input, textarea, div[data-baseweb="input"] > div {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            border-radius: 12px !important;
+            border: 2.5px solid #0284c7 !important;
+            font-weight: 700 !important;
+        }
+        textarea {
+            padding: 10px !important;
+            font-size: 16px !important;
+        }
+        input {
+            font-size: 16px !important;
+        }
+        
+        /* Etichette dei campi input ben visibili */
+        div[data-baseweb="input"], .stTextInput label, .stTextArea label, .stSelectbox label {
+            color: #0c4a6e !important;
+            font-weight: 800 !important;
+        }
+
         .cyber-card {
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.90);
             border: 2px solid #0284c7;
             border-radius: 16px;
             padding: 16px;
@@ -73,15 +96,16 @@ st.markdown(
             font-weight: 700;
             border: 2px solid #0284c7;
             background: linear-gradient(180deg, #38bdf8, #0284c7);
-            color: #ffffff;
+            color: #ffffff !important;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            font-size: 16px !important;
         }
         div.stButton > button:hover {
             border-color: #fef08a;
             background: linear-gradient(180deg, #0284c7, #0369a1);
             box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5);
-            color: #fef08a;
+            color: #fef08a !important;
         }
         div[data-baseweb="select"] > div {
             background: rgba(255, 255, 255, 0.95) !important;
