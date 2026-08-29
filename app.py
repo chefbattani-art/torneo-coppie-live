@@ -7,7 +7,6 @@ import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-# Aggiornato a 3 secondi per una fluidità e reattività elevata con tanti utenti
 st_autorefresh(interval=3000, debounce=False, key="auto_refresh_coppie")
 st.set_page_config(
     page_title="Torneo Coppie Fisse Live",
@@ -16,81 +15,113 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# --- STILE GLOBALE ---
+# --- STILE GLOBALE OTTIMIZZATO PER LA LEGGIBILITÀ ---
 st.markdown(
     """
     <style>
         .stApp {
-            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0d091e 50%, #030712 100%);
-            color: #f0f6fc;
+            background: linear-gradient(180deg, #0284c7 0%, #38bdf8 30%, #fef08a 70%, #fdba74 100%);
+            color: #0f172a;
             font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
         }
         section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #130f26, #070510);
-            border-right: 1px solid #2e1a47;
-        }
-        .cyber-card {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 27, 75, 0.7) 100%);
-            border: 1px solid #00f0ff;
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 14px;
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
-        }
-        .cyber-card-gold {
-            background: linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(60, 40, 10, 0.8) 100%);
-            border: 1.5px solid #ffd700;
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
-            text-align: center;
-        }
-        .match-live-card {
-            background: linear-gradient(135deg, #2b1f07 0%, #120d02 100%);
-            border: 2px solid #f59e0b;
-            border-radius: 16px;
-            padding: 18px;
-            text-align: center;
-            box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
-        }
-        h1, h2, h3, h4 {
-            color: #ffffff !important;
-            letter-spacing: 0.8px;
-        }
-        h1 {
-            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
-        }
-        div.stButton > button {
-            border-radius: 10px;
-            font-weight: 700;
-            border: 1px solid #00f0ff;
-            background: linear-gradient(180deg, #1e3a8a, #0f172a);
-            color: #f3e8ff;
-            transition: all 0.3s ease;
-        }
-        div.stButton > button:hover {
-            border-color: #38bdf8;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            background: linear-gradient(180deg, #0369a1, #0284c7);
+            border-right: 2px solid #fef08a;
             color: #ffffff;
         }
-        div[data-baseweb="select"] > div {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 27, 75, 0.95) 100%) !important;
-            border: 2.5px solid #00f0ff !important;
-            border-radius: 16px !important;
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6) !important;
+        section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] .stMarkdown {
             color: #ffffff !important;
+        }
+        
+        input, textarea, div[data-baseweb="input"] > div {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
+            border-radius: 12px !important;
+            border: 2.5px solid #0284c7 !important;
+            font-weight: 700 !important;
+        }
+        textarea {
+            padding: 10px !important;
+            font-size: 16px !important;
+        }
+        input {
+            font-size: 16px !important;
+        }
+        
+        div[data-baseweb="input"], .stTextInput label, .stTextArea label, .stSelectbox label {
+            color: #0c4a6e !important;
+            font-weight: 800 !important;
+        }
+
+        .cyber-card {
+            background: rgba(255, 255, 255, 0.90);
+            border: 2px solid #0284c7;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.2);
+            color: #0f172a;
+        }
+        .cyber-card-gold {
+            background: linear-gradient(135deg, rgba(254, 240, 138, 0.95) 0%, rgba(253, 186, 116, 0.95) 100%);
+            border: 2.5px solid #f59e0b;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+            text-align: center;
+            color: #78350f;
+        }
+        .match-live-card {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 2.5px solid #d97706;
+            border-radius: 16px;
+            padding: 18px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(217, 119, 6, 0.2);
+            color: #78350f;
+        }
+        h1, h2, h3, h4 {
+            color: #0c4a6e !important;
+            letter-spacing: 0.8px;
+            font-weight: 800;
+        }
+        h1 {
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.6);
+        }
+        div.stButton > button {
+            border-radius: 12px;
+            font-weight: 700;
+            border: 2px solid #0284c7;
+            background: linear-gradient(180deg, #38bdf8, #0284c7);
+            color: #ffffff !important;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            font-size: 16px !important;
+        }
+        div.stButton > button:hover {
+            border-color: #fef08a;
+            background: linear-gradient(180deg, #0284c7, #0369a1);
+            box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5);
+            color: #fef08a !important;
+        }
+        div[data-baseweb="select"] > div {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2.5px solid #0284c7 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 15px rgba(2, 132, 199, 0.2) !important;
+            color: #0f172a !important;
             min-height: 60px !important;
             display: flex !important;
             align-items: center !important;
         }
         div[data-baseweb="select"] span {
-            color: #ffffff !important;
+            color: #0f172a !important;
             font-size: 20px !important;
             font-weight: 800 !important;
-            letter-spacing: 0.5px !important;
         }
         div[data-baseweb="select"] svg {
-            fill: #00f0ff !important;
+            fill: #0284c7 !important;
             width: 28px !important;
             height: 28px !important;
         }
@@ -205,6 +236,10 @@ def calcola_partite_giocate_coppia(torneo_selezionato, g_nome, coppia):
 def renderizza_classifica_stile_card(torneo_selezionato, g_nome):
   t_data = db["tornei"][torneo_selezionato]
   dati_girone = t_data["punti_gironi"][g_nome]
+  
+  # Legge il numero di qualificati in fascia A configurato (default 4)
+  q_fascia_a = int(t_data.get("qualificati_fascia_a", 4))
+  
   sorted_c = sorted(
       dati_girone.items(),
       key=lambda x: (x[1]["punti"], x[1]["scontri_diretti_pt"], x[1]["dr"], x[1]["gf"]),
@@ -212,32 +247,32 @@ def renderizza_classifica_stile_card(torneo_selezionato, g_nome):
   )
   for idx, (coppia, info) in enumerate(sorted_c):
     gioc, tot = calcola_partite_giocate_coppia(torneo_selezionato, g_nome, coppia)
-    is_fascia_a = idx < 4
-    border_color = "#4ade80" if is_fascia_a else "#f87171"
-    bg_gradient = "linear-gradient(135deg, rgba(6, 36, 26, 0.8) 0%, rgba(3, 15, 10, 0.8) 100%)" if is_fascia_a else "linear-gradient(135deg, rgba(36, 6, 15, 0.8) 0%, rgba(15, 3, 7, 0.8) 100%)"
-    shadow_color = "rgba(74, 222, 128, 0.2)" if is_fascia_a else "rgba(248, 113, 113, 0.2)"
-    dot_color = "#4ade80" if is_fascia_a else "#f87171"
+    is_fascia_a = idx < q_fascia_a
+    border_color = "#16a34a" if is_fascia_a else "#dc2626"
+    bg_gradient = "linear-gradient(135deg, rgba(240, 253, 244, 0.95) 0%, rgba(220, 252, 231, 0.95) 100%)" if is_fascia_a else "linear-gradient(135deg, rgba(254, 242, 242, 0.95) 0%, rgba(254, 226, 226, 0.95) 100%)"
+    shadow_color = "rgba(22, 163, 74, 0.15)" if is_fascia_a else "rgba(220, 38, 38, 0.15)"
+    dot_color = "#16a34a" if is_fascia_a else "#dc2626"
 
     st.markdown(
         f"""
-        <div style="background: {bg_gradient}; border: 1.5px solid {border_color}; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 0 15px {shadow_color}; display: flex; align-items: center; justify-content: space-between;">
+        <div style="background: {bg_gradient}; border: 1.5px solid {border_color}; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 4px 12px {shadow_color}; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 10px; height: 10px; background-color: {dot_color}; border-radius: 50%; box-shadow: 0 0 8px {dot_color};"></div>
+                <div style="width: 10px; height: 10px; background-color: {dot_color}; border-radius: 50%; box-shadow: 0 0 6px {dot_color};"></div>
                 <span style="font-size: 16px; font-weight: 800; color: {dot_color}; min-width: 30px;">{idx+1}°</span>
-                <span style="font-size: 15px; font-weight: bold; color: #ffffff;">⚽🏆 {coppia}</span>
+                <span style="font-size: 15px; font-weight: bold; color: #0f172a;">⚽🏆 {coppia}</span>
             </div>
             <div style="display: flex; gap: 14px; text-align: right; font-size: 13px;">
                 <div>
-                    <span style="font-size: 9px; color: #94a3b8; display: block;">PT</span>
-                    <span style="font-weight: 800; color: #ffd700; font-size: 15px;">{info['punti']}</span>
+                    <span style="font-size: 9px; color: #64748b; display: block;">PT</span>
+                    <span style="font-weight: 800; color: #b45309; font-size: 15px;">{info['punti']}</span>
                 </div>
                 <div>
-                    <span style="font-size: 9px; color: #94a3b8; display: block;">G</span>
-                    <span style="color: #f0f6fc; font-weight: 600;">{gioc}/{tot}</span>
+                    <span style="font-size: 9px; color: #64748b; display: block;">G</span>
+                    <span style="color: #334155; font-weight: 600;">{gioc}/{tot}</span>
                 </div>
                 <div>
-                    <span style="font-size: 9px; color: #94a3b8; display: block;">DR</span>
-                    <span style="color: {"#4ade80" if info['dr'] >= 0 else "#f87171"}; font-weight: 600;">{info['dr']:+d}</span>
+                    <span style="font-size: 9px; color: #64748b; display: block;">DR</span>
+                    <span style="color: {"#16a34a" if info['dr'] >= 0 else "#dc2626"}; font-weight: 600;">{info['dr']:+d}</span>
                 </div>
             </div>
         </div>
@@ -282,55 +317,24 @@ def ottieni_nome_turno_dinamico(num_partite_turno):
   else:
     return f"Eliminazione Diretta ({tot_squadre} Coppie)"
 
-def crea_abbinamenti_fascia_a_perfetti(classificate_per_girone):
+def crea_abbinamenti_fascia_a_generico(classificate_per_girone):
   nomi_g = list(classificate_per_girone.keys())
-  if len(nomi_g) < 4:
-    return crea_abbinamenti_rigorosi_generico(classificate_per_girone)
-  g0, g1, g2, g3 = nomi_g[0], nomi_g[1], nomi_g[2], nomi_g[3]
-  squadre_g = {g: classificate_per_girone[g] for g in nomi_g}
-
-  def get_sq(g_nome, pos_idx):
-    lst = squadre_g.get(g_nome, [])
-    if pos_idx < len(lst):
-      return (lst[pos_idx], g_nome, pos_idx + 1)
-    return ("RIPOSO", g_nome, pos_idx + 1)
-
-  abbinamenti = [
-      (get_sq(g0, 0), get_sq(g1, 3)),
-      (get_sq(g2, 2), get_sq(g3, 1)),
-      (get_sq(g2, 1), get_sq(g3, 2)),
-      (get_sq(g1, 0), get_sq(g0, 3)),
-      (get_sq(g0, 1), get_sq(g1, 2)),
-      (get_sq(g2, 3), get_sq(g3, 0)),
-      (get_sq(g2, 0), get_sq(g3, 3)),
-      (get_sq(g1, 1), get_sq(g0, 2)),
-  ]
-  return abbinamenti
-
-def crea_abbinamenti_rigorosi_generico(classificate_per_girone):
-  nomi_gironi = list(classificate_per_girone.keys())
-  prime, seconde, terze, quarte = [], [], [], []
-  for g_n in nomi_gironi:
-    lst = classificate_per_girone[g_n]
-    if len(lst) > 0: prime.append((lst[0], g_n, 1))
-    if len(lst) > 1: seconde.append((lst[1], g_n, 2))
-    if len(lst) > 2: terze.append((lst[2], g_n, 3))
-    if len(lst) > 3: quarte.append((lst[3], g_n, 4))
+  tutte_a = []
+  for g_n in nomi_g:
+    for sq in classificate_per_girone[g_n]:
+      tutte_a.append((sq, g_n))
+  
+  # Accoppiamento incrociato o bilanciato in base al numero totale qualificato
   abbinamenti = []
-  for i in range(len(prime)):
-    p = prime[i]
-    q = quarte[(i + 1) % len(quarte)] if len(quarte) > 0 else ("RIPOSO", "", 4)
-    abbinamenti.append((p, q))
-  for i in range(len(seconde)):
-    s = seconde[i]
-    t = terze[(i + 1) % len(terze)] if len(terze) > 0 else ("RIPOSO", "", 3)
-    abbinamenti.append((s, t))
+  n = len(tutte_a)
+  for i in range(n // 2):
+    abbinamenti.append((tutte_a[i], tutup := tutte_a[n - 1 - i] if (n - 1 - i) >= 0 else ("RIPOSO", "")))
   return abbinamenti
 
-def crea_abbinamenti_fascia_b(classificate_per_girone):
+def crea_abbinamenti_fascia_b(classificate_per_girone, q_fascia_a):
   tutte_b = []
   for g_n, lista in classificate_per_girone.items():
-    for idx in range(4, len(lista)):
+    for idx in range(q_fascia_a, len(lista)):
       tutte_b.append((lista[idx], g_n, idx + 1))
   random.shuffle(tutte_b)
   abbinamenti = []
@@ -399,8 +403,8 @@ st.sidebar.markdown("---")
 st.markdown(
     """
     <div style="text-align: left; margin-bottom: 8px;">
-        <span style="color: #00f0ff; font-size: 13px; letter-spacing: 2px; font-weight: bold;">TOURNAMENT CIRCUIT SELECTION</span>
-        <h1 style="font-size: 28px; margin: 4px 0 12px 0; color: #ffffff; text-shadow: 0 0 25px rgba(0,240,255,0.6);">
+        <span style="color: #0369a1; font-size: 13px; letter-spacing: 2px; font-weight: 800;">TOURNAMENT CIRCUIT SELECTION</span>
+        <h1 style="font-size: 28px; margin: 4px 0 12px 0; color: #0c4a6e; text-shadow: 1px 1px 2px rgba(255,255,255,0.8);">
             🏆 Torneo Coppie Fisse Live
         </h1>
     </div>
@@ -439,6 +443,7 @@ if not tornei_disponibili:
               "max_coppie": int(nc_max),
               "num_tavoli": int(nc_tavoli),
               "num_gironi": int(nc_gironi),
+              "qualificati_fascia_a": 4,
               "gironi": {},
               "calendario_gironi": {},
               "punti_gironi": {},
@@ -459,6 +464,8 @@ if "coda" not in t_data:
   t_data["coda"] = []
 if "max_coppie" not in t_data:
   t_data["max_coppie"] = 32
+if "qualificati_fascia_a" not in t_data:
+  t_data["qualificati_fascia_a"] = 4
 salva_dati(db)
 
 if is_admin:
@@ -480,6 +487,7 @@ if is_admin:
             "max_coppie": int(nc_max),
             "num_tavoli": int(nc_tavoli),
             "num_gironi": int(nc_gironi),
+            "qualificati_fascia_a": 4,
             "gironi": {},
             "calendario_gironi": {},
             "punti_gironi": {},
@@ -493,16 +501,12 @@ if is_admin:
         st.success("Torneo creato con successo!")
         st.rerun()
 
-  # --- BLOCCO ELIMINAZIONE TORNEO ---
   st.sidebar.markdown("---")
   st.sidebar.subheader("🗑️ Elimina Torneo")
-  
   tornei_eliminabili = list(db["tornei"].keys())
-  
   if tornei_eliminabili:
     torneo_da_eliminare = st.sidebar.selectbox("Seleziona torneo da rimuovere", options=tornei_eliminabili, key="sel_del_torneo")
     conferma_canc_torneo = st.sidebar.checkbox("Conferma eliminazione definitiva", key="chk_del_torneo")
-    
     if st.sidebar.button("Elimina Torneo Selezionato", use_container_width=True):
       if conferma_canc_torneo:
         if torneo_da_eliminare in db["tornei"]:
@@ -512,8 +516,6 @@ if is_admin:
           st.rerun()
       else:
         st.sidebar.warning("⚠️ Spunta la casella di conferma per procedere.")
-  else:
-    st.sidebar.info("Nessun torneo disponibile.")
 
 st.sidebar.markdown("⚙️ Pannello di Controllo")
 
@@ -547,6 +549,7 @@ if is_admin:
           "max_coppie": t_data.get("max_coppie", 32),
           "num_tavoli": t_data.get("num_tavoli", 6),
           "num_gironi": t_data.get("num_gironi", 4),
+          "qualificati_fascia_a": t_data.get("qualificati_fascia_a", 4),
           "gironi": {},
           "calendario_gironi": {},
           "punti_gironi": {},
@@ -574,10 +577,10 @@ with st.expander("ℹ️ Come funziona il torneo"):
       unsafe_allow_html=True,
   )
 
-# --- GESTIONE ISCRIZIONI APERTE CON CODA E MAIUSCOLA FORZATA ---
+# --- GESTIONE ISCRIZIONI APERTE ---
 if t_data["stato"] == "iscrizioni_aperte":
   st.markdown(f"### 📝 Registrazione Autonoma & Incolla WhatsApp - {torneo_selezionato}")
-  st.info(f"Limite massimo coppie titolari impostato: **{t_data['max_coppie']}**. Se il limite è raggiunto, le successive iscrizioni entreranno automaticamente in coda.")
+  st.info(f"Limite massimo coppie titolari impostato: **{t_data['max_coppie']}**.")
 
   with st.form(f"form_iscrizione_{torneo_selezionato}"):
     c1_input = st.text_input("Nome Giocatore 1")
@@ -642,10 +645,10 @@ if t_data["stato"] == "iscrizioni_aperte":
 
       if aggiunte_titolari > 0 or aggiunte_coda > 0:
         salva_dati(db)
-        st.success(f"Aggiunte: {aggiunte_titolari} tra i Titolari e {aggiunte_coda} in Coda (tutto in MAIUSCOLO).")
+        st.success(f"Aggiunte: {aggiunte_titolari} tra i Titolari e {aggiunte_coda} in Coda.")
         st.rerun()
       else:
-        st.warning("Nessuna nuova coppia valida o coppie già presenti nelle liste.")
+        st.warning("Nessuna nuova coppia valida o coppie già presenti.")
 
   st.markdown("---")
   col_tit_vista, col_cod_vista = st.columns(2)
@@ -658,7 +661,7 @@ if t_data["stato"] == "iscrizioni_aperte":
       for idx, c in enumerate(t_data["coppie"], 1):
         col_ic1, col_ic2 = st.columns([0.80, 0.20])
         with col_ic1:
-          st.markdown(f"<div style='padding: 6px 10px; background: rgba(0,240,255,0.05); border: 1px solid rgba(0,240,255,0.2); border-radius: 8px; margin-bottom: 5px; font-size: 14px;'><b>{idx}.</b> ⚽ {c}</div>", unsafe_allow_html=True)
+          st.markdown(f"<div style='padding: 6px 10px; background: rgba(255,255,255,0.9); border: 1px solid #0284c7; border-radius: 8px; margin-bottom: 5px; font-size: 14px; color: #0f172a;'><b>{idx}.</b> ⚽ {c}</div>", unsafe_allow_html=True)
         with col_ic2:
           if st.button("🗑️", key=f"del_isc_{torneo_selezionato}_{idx}", use_container_width=True):
             t_data["coppie"].remove(c)
@@ -676,7 +679,7 @@ if t_data["stato"] == "iscrizioni_aperte":
       for idx_c, c_coda in enumerate(t_data["coda"], 1):
         col_cc1, col_cc2 = st.columns([0.80, 0.20])
         with col_cc1:
-          st.markdown(f"<div style='padding: 6px 10px; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; margin-bottom: 5px; font-size: 14px; color: #fbbf24;'><b>{idx_c}.</b> ⏳ {c_coda}</div>", unsafe_allow_html=True)
+          st.markdown(f"<div style='padding: 6px 10px; background: rgba(254,243,199,0.9); border: 1px solid #d97706; border-radius: 8px; margin-bottom: 5px; font-size: 14px; color: #b45309;'><b>{idx_c}.</b> ⏳ {c_coda}</div>", unsafe_allow_html=True)
         with col_cc2:
           if st.button("🗑️", key=f"del_coda_{torneo_selezionato}_{idx_c}", use_container_width=True):
             t_data["coda"].remove(c_coda)
@@ -693,6 +696,14 @@ if t_data["stato"] == "iscrizioni_aperte":
       t_data["num_gironi"] = st.number_input("N. Gironi", min_value=1, max_value=8, value=int(t_data.get("num_gironi", 4)), key=f"gir_{torneo_selezionato}")
     with col_cfg3:
       t_data["max_coppie"] = st.number_input("Max Titolari", min_value=2, max_value=128, value=int(t_data.get("max_coppie", 32)), key=f"maxc_{torneo_selezionato}")
+
+    # NUOVO SELETTORE PER DECISTERE QUANTE COPPIE FAR PASSARE IN FASCIA A PER GIRONE
+    t_data["qualificati_fascia_a"] = st.number_input(
+        "🏆 Quante coppie passano in FASCIA A per ogni girone?",
+        min_value=1, max_value=16,
+        value=int(t_data.get("qualificati_fascia_a", 4)),
+        help="Le prime N coppie di ogni girone andranno nel tabellone principale (Fascia A), le rimanenti in Fascia B."
+    )
 
     if st.button("🚀 Avvia Torneo (Crea Gironi Casuali)", use_container_width=True):
       num_g = int(t_data["num_gironi"])
@@ -752,7 +763,7 @@ if t_data["stato"] == "iscrizioni_aperte":
 
   st.stop()
 
-# --- SELETTORE COPPIA PER CHI HA GIÀ AVVIATO IL TORNEO ---
+# --- SELETTORE COPPIA ---
 tutte_le_coppie = []
 for g_lst in t_data["gironi"].values():
   tutte_le_coppie.extend(g_lst)
@@ -805,21 +816,21 @@ if coppia_selezionata != "-- Seleziona la tua coppia per accedere --":
 
     st.markdown(
         f"""
-        <div class="cyber-card" style="border-color: #00f0ff; text-align: left; padding: 20px;">
-            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #00f0ff; font-weight: bold; margin-bottom: 2px;">LA TUA COPPIA</div>
-            <div style="font-size: 22px; font-weight: 800; color: #ffffff; margin-bottom: 14px; text-shadow: 0 0 10px rgba(0,240,255,0.4);">🤝 {coppia_selezionata}</div>
+        <div class="cyber-card" style="border-color: #0284c7; text-align: left; padding: 20px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #0284c7; font-weight: bold; margin-bottom: 2px;">LA TUA COPPIA</div>
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 14px;">🤝 {coppia_selezionata}</div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #1e3a8a; border-radius: 10px; padding: 10px; flex: 1; min-width: 100px; text-align: center;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">POSIZIONE</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #4ade80; margin-top: 2px;">{str(pos_mia) + '° POSTO' if pos_mia else 'N.D.'}</div>
+                <div style="background: rgba(255, 255, 255, 0.9); border: 1px solid #0284c7; border-radius: 10px; padding: 10px; flex: 1; min-width: 100px; text-align: center;">
+                    <div style="font-size: 10px; color: #64748b; font-weight: bold;">POSIZIONE</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #16a34a; margin-top: 2px;">{str(pos_mia) + '° POSTO' if pos_mia else 'N.D.'}</div>
                 </div>
-                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #1e3a8a; border-radius: 10px; padding: 10px; flex: 1; min-width: 100px; text-align: center;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">GIRONE</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #00f0ff; margin-top: 2px;">{girone_mio if girone_mio else 'N.D.'}</div>
+                <div style="background: rgba(255, 255, 255, 0.9); border: 1px solid #0284c7; border-radius: 10px; padding: 10px; flex: 1; min-width: 100px; text-align: center;">
+                    <div style="font-size: 10px; color: #64748b; font-weight: bold;">GIRONE</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #0284c7; margin-top: 2px;">{girone_mio if girone_mio else 'N.D.'}</div>
                 </div>
-                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #1e3a8a; border-radius: 10px; padding: 10px; flex: 1; min-width: 100px; text-align: center;">
-                    <div style="font-size: 10px; color: #94a3b8; font-weight: bold;">PUNTI / DR</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #fbbf24; margin-top: 2px;">{info_mie['punti'] if info_mie else 0} PT <span style="font-size: 11px; font-weight: normal; color: #94a3b8;">(DR: {info_mie['dr'] if info_mie else 0})</span></div>
+                <div style="background: rgba(255, 255, 255, 0.9); border: 1px solid #0284c7; border-radius: 10px; padding: 10px; flex: 1; min-width: 100px; text-align: center;">
+                    <div style="font-size: 10px; color: #64748b; font-weight: bold;">PUNTI / DR</div>
+                    <div style="font-size: 16px; font-weight: 700; color: #b45309; margin-top: 2px;">{info_mie['punti'] if info_mie else 0} PT <span style="font-size: 11px; font-weight: normal; color: #64748b;">(DR: {info_mie['dr'] if info_mie else 0})</span></div>
                 </div>
             </div>
         </div>
@@ -891,10 +902,10 @@ if t_data["stato"] == "gironi":
         st.markdown(
             f"""
             <div class="match-live-card" style="margin-bottom: 12px;">
-                <div style="font-size: 14px; color: #f59e0b; font-weight: bold; margin-bottom: 8px;">{tavolo_str}</div>
-                <div style="font-size: 16px; font-weight: bold; color: #ffffff;">🤝 {m['c1']}</div>
-                <div style="margin: 4px 0; font-size: 12px; font-weight: bold; color: #94a3b8;">VS</div>
-                <div style="font-size: 16px; font-weight: bold; color: #ffffff;">🤝 {m['c2']}</div>
+                <div style="font-size: 14px; color: #b45309; font-weight: bold; margin-bottom: 8px;">{tavolo_str}</div>
+                <div style="font-size: 16px; font-weight: bold; color: #0f172a;">🤝 {m['c1']}</div>
+                <div style="margin: 4px 0; font-size: 12px; font-weight: bold; color: #64748b;">VS</div>
+                <div style="font-size: 16px; font-weight: bold; color: #0f172a;">🤝 {m['c2']}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -929,9 +940,9 @@ if t_data["stato"] == "gironi":
       for idx, m in enumerate(partite_in_coda_correnti):
         st.markdown(
             f"""
-            <div style="background: linear-gradient(135deg, #06241a 0%, #030f0a 100%); border: 1.5px solid #10b981; padding: 14px; border-radius: 10px; margin-bottom: 10px; color: #34d399; text-align: center;">
+            <div style="background: rgba(255, 255, 255, 0.9); border: 1.5px solid #16a34a; padding: 14px; border-radius: 10px; margin-bottom: 10px; color: #166534; text-align: center; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.1);">
                 <b style="font-size: 13px;">⏳ {idx+1}. {m['girone']}</b><br>
-                <b style="color: #ffffff; font-size: 14px;">{m['c1']} vs {m['c2']}</b>
+                <b style="color: #0f172a; font-size: 14px;">{m['c1']} vs {m['c2']}</b>
             </div>
             """,
             unsafe_allow_html=True,
@@ -946,24 +957,37 @@ if t_data["stato"] == "gironi":
       if i + j < len(nomi_gironi_chiavi):
         g_nome = nomi_gironi_chiavi[i + j]
         with col_gironi[j]:
-          st.markdown(f"<h3 style='text-align: center; color: #00f0ff;'>📁 {g_nome}</h3>", unsafe_allow_html=True)
+          st.markdown(f"<h3 style='text-align: center; color: #0c4a6e;'>📁 {g_nome}</h3>", unsafe_allow_html=True)
           renderizza_classifica_stile_card(torneo_selezionato, g_nome)
 
   if is_admin:
     st.markdown("---")
-    if st.button("🏆 Genera Fasi Finali per questo Torneo", use_container_width=True):
+    q_a = int(t_data.get("qualificati_fascia_a", 4))
+    if st.button(f"🏆 Genera Fasi Finali (Prime {q_a} in Fascia A)", use_container_width=True):
       classificate_a, classificate_b_raw = {}, {}
       for g_nome in t_data["gironi"]:
         dati_girone = t_data["punti_gironi"][g_nome]
         sorted_c = sorted(dati_girone.items(), key=lambda x: (x[1]["punti"], x[1]["scontri_diretti_pt"], x[1]["dr"], x[1]["gf"]), reverse=True)
         squadre_girone = [str(c[0]).upper() for c in sorted_c]
-        classificate_a[g_nome] = squadre_girone[:4]
+        classificate_a[g_nome] = squadre_girone[:q_a]
         classificate_b_raw[g_nome] = squadre_girone
 
-      abbinamenti_a = crea_abbinamenti_fascia_a_perfetti(classificate_a)
-      abbinamenti_b = crea_abbinamenti_fascia_b(classificate_b_raw)
+      # Generazione flessibile degli accoppiamenti di Fascia A e Fascia B basata sulla scelta admin
+      tutte_sq_a = []
+      for g_n in classificate_a:
+        for sq in classificate_a[g_n]:
+          tutte_sq_a.append((sq, g_n))
+      random.shuffle(tutte_sq_a)
+      abbinamenti_a = []
+      for i in range(0, len(tutte_sq_a), 2):
+        if i + 1 < len(tutte_sq_a):
+          abbinamenti_a.append((tutte_sq_a[i], tutte_sq_a[i + 1]))
+        else:
+          abbinamenti_a.append((tutte_sq_a[i], ("RIPOSO", "")))
 
-      turno_a_iniziale = [{"id": f"fa_t1_m{i}", "s1": str(s1[0]).upper(), "g1": s1[1], "p1": s1[2], "s2": str(s2[0]).upper(), "g2": s2[1], "p2": s2[2], "giocata": False, "vincente": None} for i, (s1, s2) in enumerate(abbinamenti_a)]
+      abbinamenti_b = crea_abbinamenti_fascia_b(classificate_b_raw, q_a)
+
+      turno_a_iniziale = [{"id": f"fa_t1_m{i}", "s1": str(s1[0]).upper(), "g1": s1[1], "p1": "", "s2": str(s2[0]).upper(), "g2": s2[1], "p2": "", "giocata": False, "vincente": None} for i, (s1, s2) in enumerate(abbinamenti_a)]
       turno_b_iniziale = [{"id": f"fb_t1_m{i}", "s1": str(s1[0]).upper(), "g1": s1[1], "p1": s1[2], "s2": str(s2[0]).upper(), "g2": s2[1], "p2": s2[2], "giocata": False, "vincente": None} for i, (s1, s2) in enumerate(abbinamenti_b)]
 
       t_data["tabellone_a"] = [{"turno": 1, "partite": turno_a_iniziale}]
@@ -973,7 +997,7 @@ if t_data["stato"] == "gironi":
       t_data["stato"] = "fasi_finali"
       t_data["fasi_finali_configurate"] = True
       salva_dati(db)
-      st.success("Fasi finali generate!")
+      st.success("Fasi finali generate correttamente!")
       st.rerun()
 
 # 3. FASI FINALI
@@ -1011,7 +1035,7 @@ elif t_data["stato"] == "fasi_finali":
       partite_turno = turno_obj["partite"]
       nome_etichetta = ottieni_nome_turno_dinamico(len(partite_turno))
 
-      st.markdown(f"""<div style="background: linear-gradient(90deg, #1e3a8a 0%, #00f0ff 100%); padding: 10px; border-radius: 8px; margin: 15px 0; text-align: center; color: white;"><b>{nome_etichetta}</b></div>""", unsafe_allow_html=True)
+      st.markdown(f"""<div style="background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%); padding: 10px; border-radius: 8px; margin: 15px 0; text-align: center; color: white;"><b>{nome_etichetta}</b></div>""", unsafe_allow_html=True)
 
       if t_idx + 1 < len(turni_tab):
         turno_successivo = turni_tab[t_idx + 1]
@@ -1022,14 +1046,12 @@ elif t_data["stato"] == "fasi_finali":
             target_match_idx = m_i // 2
             slot_squadra = "s1" if (m_i % 2 == 0) else "s2"
             slot_g = "g1" if (m_i % 2 == 0) else "g2"
-            slot_p = "p1" if (m_i % 2 == 0) else "p1"
 
             if target_match_idx < len(turno_successivo["partite"]):
               dest_match = turno_successivo["partite"][target_match_idx]
               if dest_match[slot_squadra] in ["In attesa...", ""]:
                 dest_match[slot_squadra] = vincitore_corrente
                 dest_match[slot_g] = g_v
-                dest_match[slot_p] = p_v
                 salva_dati(db)
 
       perdenti_turno = []
@@ -1037,13 +1059,13 @@ elif t_data["stato"] == "fasi_finali":
         match_id = m["id"]
         s1_nome, s2_nome = str(m["s1"]).upper(), str(m["s2"]).upper()
         if s1_nome in ["In attesa...", ""] or s2_nome in ["In attesa...", ""]:
-          st.markdown(f"""<div class="cyber-card" style="text-align: center;"><b>{s1_nome} vs {s2_nome}</b><br><span style="color: #93c5fd;">In attesa di squadre</span></div>""", unsafe_allow_html=True)
+          st.markdown(f"""<div class="cyber-card" style="text-align: center;"><b>{s1_nome} vs {s2_nome}</b><br><span style="color: #64748b;">In attesa di squadre</span></div>""", unsafe_allow_html=True)
           continue
 
         if m["giocata"]:
           perdente_match = s2_nome if str(m["vincente"]).upper() == s1_nome else s1_nome
           perdenti_turno.append(perdente_match)
-          centro_testo = f"<b style='color: #10b981;'>Vince: {str(m['vincente']).upper()}</b>"
+          centro_testo = f"<b style='color: #16a34a;'>Vince: {str(m['vincente']).upper()}</b>"
         else:
           centro_testo = "<b>VS</b>"
 
@@ -1104,9 +1126,9 @@ elif t_data["stato"] == "fasi_finali":
           f"""
           <div class="cyber-card-gold" style="padding: 20px; margin-top: 15px;">
               <h2>🏆 PODIO - {titolo_tab} 🏆</h2>
-              <p style="font-size: 18px; color: #fbbf24;">🥇 1° POSTO: <b>{campione}</b></p>
-              <p style="font-size: 16px;">🥈 2° POSTO: {secondo_posto}</p>
-              <p style="font-size: 16px;">🥉 3° POSTO: {terzo_posto if terzo_posto else 'N.D.'}</p>
+              <p style="font-size: 18px; color: #b45309;">🥇 1° POSTO: <b>{campione}</b></p>
+              <p style="font-size: 16px; color: #475569;">🥈 2° POSTO: {secondo_posto}</p>
+              <p style="font-size: 16px; color: #78350f;">🥉 3° POSTO: {terzo_posto if terzo_posto else 'N.D.'}</p>
           </div>
           """,
           unsafe_allow_html=True,
